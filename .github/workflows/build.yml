@@ -16,7 +16,7 @@ env:
 
 jobs:
   build-native:
-    name: Build native (${{ matrix.os }} ${{ matrix.platform }})
+    name: Build native framework-system rust (${{ matrix.os }} ${{ matrix.platform }})
     strategy:
       fail-fast: true
       matrix:
@@ -48,7 +48,7 @@ jobs:
     - name: Setup Rust toolchain
       run: rustup show
 
-    - name: Install dependencies
+    - name: Install Linux Framework dependencies
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
