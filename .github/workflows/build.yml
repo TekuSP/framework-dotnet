@@ -41,7 +41,7 @@ jobs:
     runs-on: ${{ matrix.runsOn }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -58,7 +58,7 @@ jobs:
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
 
     - name: Upload native artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: framework-dotnet-native-${{ matrix.platform }}
         path: ${{ matrix.artifactPath }}
@@ -70,7 +70,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -83,25 +83,25 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Download win-x64 native artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: framework-dotnet-native-win-x64
         path: artifacts/win-x64
 
     - name: Download win-arm64 native artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: framework-dotnet-native-win-arm64
         path: artifacts/win-arm64
 
     - name: Download linux-x64 native artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: framework-dotnet-native-linux-x64
         path: artifacts/linux-x64
 
     - name: Download linux-arm64 native artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: framework-dotnet-native-linux-arm64
         path: artifacts/linux-arm64
@@ -124,7 +124,7 @@ jobs:
         -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}\artifacts\linux-arm64\libframework_dotnet_ffi.so
 
     - name: Upload NuGet package artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: framework-dotnet-nuget
         path: framework-dotnet/bin/Release/*.nupkg
