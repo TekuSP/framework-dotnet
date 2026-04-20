@@ -1,4 +1,5 @@
 # framework-dotnet
+[![Build](https://github.com/TekuSP/framework-dotnet/actions/workflows/build.yml/badge.svg)](https://github.com/TekuSP/framework-dotnet/actions/workflows/build.yml)
 
 `FrameworkDotnet` is a .NET library for talking to Framework laptop and desktop embedded controller APIs through the native `framework-system` Rust FFI layer.
 
