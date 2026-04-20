@@ -5,6 +5,23 @@
     <RootNamespace>FrameworkDotnet</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RustProjectDir>$(MSBuildProjectDirectory)\..\framework-system\</RustProjectDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="csbindgen" Version="1.9.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Target Name="EnsureRustSubmodule" BeforeTargets="Build" Condition="!Exists('$(RustProjectDir)\Cargo.toml')">
+    <Warning Text="Rust submodule not found at $(RustProjectDir). Run: git submodule update --init --recursive" />
+  </Target>
+
+  <Target Name="BuildRustSubmodule" BeforeTargets="BeforeBuild" Condition="Exists('$(RustProjectDir)\Cargo.toml')">
+    <Message Text="Building Rust project at $(RustProjectDir)" Importance="high" />
+    <Exec Command="cargo build --manifest-path &quot;$(RustProjectDir)\Cargo.toml&quot; -p framework_dotnet_ffi --release" />
+  </Target>
 
 </Project>
