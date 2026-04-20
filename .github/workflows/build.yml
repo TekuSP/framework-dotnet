@@ -48,6 +48,12 @@ jobs:
     - name: Setup Rust toolchain
       run: rustup show
 
+    - name: Install dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libudev-dev
+
     - name: Build native library
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
 
