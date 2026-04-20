@@ -10,6 +10,10 @@ concurrency:
   group: build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  packages: write
+  contents: read
+
 env:
   DOTNET_VERSION: '10.0.x'
   VERSION_PREFIX: '0.1'
@@ -143,6 +147,6 @@ jobs:
         if-no-files-found: error
     - name: Push nugets to Github
       run: |
-        nuget sources Add -Name github -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -UserName ${{ github.repository_owner }} -Password ${{ secrets.NUGET_GITHUB_TOKEN }}
-        nuget push "**/framework-dotnet/bin/Release/*.nupkg" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -NoSymbols -SkipDuplicate -ApiKey ${{ secrets.NUGET_GITHUB_TOKEN }}
+        nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
+        nuget push "**/framework-dotnet/bin/Release/*.nupkg" -Source "GitHub"
 
