@@ -21,6 +21,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <SkipRustBuild Condition="'$(SkipRustBuild)' == ''">false</SkipRustBuild>
     <RustProjectDir>$(MSBuildProjectDirectory)\..\framework-system\</RustProjectDir>
     <RustBindingsFile>$(RustProjectDir)\framework_dotnet_ffi\csharp\NativeMethods.g.cs</RustBindingsFile>
     <RustNativeOutputDir>$(RustProjectDir)\target\release</RustNativeOutputDir>
@@ -39,7 +40,7 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup Condition="Exists('$(RustBindingsFile)')">
+  <ItemGroup>
     <Compile Include="$(RustBindingsFile)" Link="Interop\Generated\NativeMethods.g.cs" />
   </ItemGroup>
 
@@ -68,13 +69,17 @@
           Condition="Exists('$(FrameworkDotnetLinuxArm64NativeLibraryPath)')" />
   </ItemGroup>
 
-  <Target Name="EnsureRustSubmodule" BeforeTargets="Build" Condition="!Exists('$(RustProjectDir)\Cargo.toml')">
-    <Warning Text="Rust submodule not found at $(RustProjectDir). Run: git submodule update --init --recursive" />
+  <Target Name="EnsureRustSubmodule" BeforeTargets="Build" Condition="'$(SkipRustBuild)' != 'true' and !Exists('$(RustProjectDir)\Cargo.toml')">
+    <Error Text="Rust submodule not found at $(RustProjectDir). Run: git submodule update --init --recursive or build with /p:SkipRustBuild=true when generated bindings and native assets are supplied externally." />
   </Target>
 
-  <Target Name="BuildRustSubmodule" BeforeTargets="BeforeBuild" Condition="Exists('$(RustProjectDir)\Cargo.toml')">
+  <Target Name="BuildRustSubmodule" BeforeTargets="BeforeBuild" Condition="'$(SkipRustBuild)' != 'true' and Exists('$(RustProjectDir)\Cargo.toml')">
     <Message Text="Building Rust project at $(RustProjectDir)" Importance="high" />
     <Exec Command="cargo build --manifest-path &quot;$(RustProjectDir)\Cargo.toml&quot; -p framework_dotnet_ffi --release" />
+  </Target>
+
+  <Target Name="EnsureGeneratedBindings" BeforeTargets="CoreCompile" Condition="!Exists('$(RustBindingsFile)')">
+    <Error Text="Generated bindings file not found at $(RustBindingsFile). Build the Rust project first, or provide the generated bindings before building with /p:SkipRustBuild=true." />
   </Target>
 
   <Target Name="IncludeRustNativeLibraryInOutput" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="Exists('$(RustNativeOutputDir)\$(RustNativeLibraryName)')">

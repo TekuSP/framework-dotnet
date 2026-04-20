@@ -64,6 +64,14 @@ jobs:
         path: ${{ matrix.artifactPath }}
         if-no-files-found: error
 
+    - name: Upload generated bindings artifact
+      if: matrix.platform == 'win-x64'
+      uses: actions/upload-artifact@v7
+      with:
+        name: framework-dotnet-bindings
+        path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
+        if-no-files-found: error
+
   pack:
     name: Pack NuGet
     needs: build-native
@@ -74,13 +82,16 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup Rust toolchain
-      run: rustup show
-
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download generated bindings artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-bindings
+        path: framework-system/framework_dotnet_ffi/csharp
 
     - name: Download win-x64 native artifact
       uses: actions/download-artifact@v8
@@ -118,6 +129,7 @@ jobs:
         -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
+        -p:SkipRustBuild=true
         -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}\artifacts\win-x64\framework_dotnet_ffi.dll
         -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}\artifacts\win-arm64\framework_dotnet_ffi.dll
         -p:FrameworkDotnetLinuxNativeLibraryPath=${{ github.workspace }}\artifacts\linux-x64\libframework_dotnet_ffi.so
