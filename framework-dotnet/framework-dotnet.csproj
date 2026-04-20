@@ -5,7 +5,12 @@
     <RootNamespace>FrameworkDotnet</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RustProjectDir>$(MSBuildProjectDirectory)\..\framework-system\</RustProjectDir>
+    <RustBindingsFile>$(RustProjectDir)\framework_dotnet_ffi\csharp\NativeMethods.g.cs</RustBindingsFile>
+    <RustNativeOutputDir>$(RustProjectDir)\target\release</RustNativeOutputDir>
+    <RustNativeLibraryName Condition="'$(OS)' == 'Windows_NT'">framework_dotnet_ffi.dll</RustNativeLibraryName>
+    <RustNativeLibraryName Condition="'$(OS)' != 'Windows_NT'">libframework_dotnet_ffi.so</RustNativeLibraryName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +18,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(RustBindingsFile)')">
+    <Compile Include="$(RustBindingsFile)" Link="Interop\Generated\NativeMethods.g.cs" />
   </ItemGroup>
 
   <Target Name="EnsureRustSubmodule" BeforeTargets="Build" Condition="!Exists('$(RustProjectDir)\Cargo.toml')">
@@ -23,5 +32,13 @@
     <Message Text="Building Rust project at $(RustProjectDir)" Importance="high" />
     <Exec Command="cargo build --manifest-path &quot;$(RustProjectDir)\Cargo.toml&quot; -p framework_dotnet_ffi --release" />
   </Target>
+
+  <Target Name="CopyRustNativeLibrary" AfterTargets="Build" Condition="Exists('$(RustNativeOutputDir)\$(RustNativeLibraryName)')">
+    <Copy SourceFiles="$(RustNativeOutputDir)\$(RustNativeLibraryName)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
+    <Compile Update="C:\Users\richa\source\repos\framework-dotnet\framework-dotnet\..\framework-system\\framework_dotnet_ffi\csharp\NativeMethods.g.cs" Link="Generated\NativeMethods.g.cs" />
+  </ItemGroup>
 
 </Project>
