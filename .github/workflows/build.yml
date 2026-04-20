@@ -52,7 +52,7 @@ jobs:
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
 
     - name: Upload native artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: framework-dotnet-native-${{ matrix.platform }}
         path: ${{ matrix.artifactPath }}
@@ -118,7 +118,7 @@ jobs:
         -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}\artifacts\linux-arm64\libframework_dotnet_ffi.so
 
     - name: Upload NuGet package artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: framework-dotnet-nuget
         path: framework-dotnet/bin/Release/*.nupkg
