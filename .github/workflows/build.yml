@@ -141,3 +141,8 @@ jobs:
         name: framework-dotnet-nuget
         path: framework-dotnet/bin/Release/*.nupkg
         if-no-files-found: error
+    - name: Push nugets to Github
+      run: |
+        nuget sources Add -Name github -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -UserName ${{ github.repository_owner }} -Password ${{ secrets.GITHUB_TOKEN }}
+        nuget push "**/framework-dotnet/bin/Release/*.nupkg" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -NoSymbols -SkipDuplicate -ApiKey ${{ secrets.GITHUB_TOKEN }}
+
