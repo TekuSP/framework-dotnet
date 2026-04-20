@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Framework.System.Interop;
 
-public unsafe partial struct FrameworkByteBuffer : IDisposable
+internal unsafe partial struct FrameworkByteBuffer : IDisposable
 {
     public readonly bool HasValue => ptr != null && length > 0;
 

@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="framework-dotnet-cli-test/framework-dotnet-cli-test.csproj" />
   <Project Path="framework-dotnet/framework-dotnet.csproj" />
 </Solution>

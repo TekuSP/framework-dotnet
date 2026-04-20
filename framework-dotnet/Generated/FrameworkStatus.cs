@@ -2,7 +2,7 @@ using System;
 
 namespace Framework.System.Interop;
 
-public unsafe partial struct FrameworkStatus
+internal unsafe partial struct FrameworkStatus
 {
     internal readonly bool IsSuccess => code == FrameworkStatusCode.Success;
 

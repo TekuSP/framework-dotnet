@@ -2,7 +2,7 @@ using FrameworkDotnet.Generated;
 
 namespace Framework.System.Interop;
 
-public unsafe partial struct FrameworkEcFlashVersions
+internal unsafe partial struct FrameworkEcFlashVersions
 {
     public readonly string GetRoVersion()
     {

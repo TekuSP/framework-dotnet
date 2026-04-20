@@ -33,8 +33,13 @@
     <Exec Command="cargo build --manifest-path &quot;$(RustProjectDir)\Cargo.toml&quot; -p framework_dotnet_ffi --release" />
   </Target>
 
-  <Target Name="CopyRustNativeLibrary" AfterTargets="Build" Condition="Exists('$(RustNativeOutputDir)\$(RustNativeLibraryName)')">
-    <Copy SourceFiles="$(RustNativeOutputDir)\$(RustNativeLibraryName)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  <Target Name="IncludeRustNativeLibraryInOutput" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="Exists('$(RustNativeOutputDir)\$(RustNativeLibraryName)')">
+    <ItemGroup>
+      <ContentWithTargetPath Include="$(RustNativeOutputDir)\$(RustNativeLibraryName)">
+        <TargetPath>$(RustNativeLibraryName)</TargetPath>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </ContentWithTargetPath>
+    </ItemGroup>
   </Target>
 
   <ItemGroup>

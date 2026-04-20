@@ -7,7 +7,7 @@ using GroupedNativeMethodsGenerator;
 namespace Framework.System.Interop;
 
 [GroupedNativeMethods(removePrefix: "framework_", removeSuffix: "_handle")]
-public static unsafe partial class NativeMethods
+internal static unsafe partial class NativeMethods
 {
     private const string DllName = "framework_dotnet_ffi";
 

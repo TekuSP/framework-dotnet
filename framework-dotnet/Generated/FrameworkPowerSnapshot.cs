@@ -2,7 +2,7 @@ using FrameworkDotnet.Generated;
 
 namespace Framework.System.Interop;
 
-public unsafe partial struct FrameworkPowerSnapshot
+internal unsafe partial struct FrameworkPowerSnapshot
 {
     public readonly string GetManufacturer()
     {
