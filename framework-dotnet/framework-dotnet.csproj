@@ -1,16 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <RuntimeIdentifiers>win-x64;linux-x64</RuntimeIdentifiers>
     <RootNamespace>FrameworkDotnet</RootNamespace>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>true</IsPackable>
+    <PackageId>FrameworkDotnet</PackageId>
+    <Title>FrameworkDotnet</Title>
+    <Version>0.1.0</Version>
+    <Authors>Richard "TekuSP" Torhan</Authors>
+    <Description>Managed .NET bindings for Framework embedded controller, platform, power, fan, and thermal APIs backed by the framework-system Rust native layer.</Description>
+    <PackageTags>Framework;EmbeddedController;Hardware;Interop;Telemetry;FanControl;Power;Thermal</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/TekuSP/framework-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TekuSP/framework-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <RustProjectDir>$(MSBuildProjectDirectory)\..\framework-system\</RustProjectDir>
     <RustBindingsFile>$(RustProjectDir)\framework_dotnet_ffi\csharp\NativeMethods.g.cs</RustBindingsFile>
     <RustNativeOutputDir>$(RustProjectDir)\target\release</RustNativeOutputDir>
     <RustNativeLibraryName Condition="'$(OS)' == 'Windows_NT'">framework_dotnet_ffi.dll</RustNativeLibraryName>
     <RustNativeLibraryName Condition="'$(OS)' != 'Windows_NT'">libframework_dotnet_ffi.so</RustNativeLibraryName>
+    <NuGetNativePlatform Condition="'$(OS)' == 'Windows_NT'">win</NuGetNativePlatform>
+    <NuGetNativePlatform Condition="'$(OS)' != 'Windows_NT'">linux</NuGetNativePlatform>
+    <NuGetNativeArchitecture Condition="'$(PROCESSOR_ARCHITECTURE)' == 'AMD64'">x64</NuGetNativeArchitecture>
+    <NuGetNativeArchitecture Condition="'$(PROCESSOR_ARCHITECTURE)' == 'ARM64'">arm64</NuGetNativeArchitecture>
+    <NuGetNativeArchitecture Condition="'$(PROCESSOR_ARCHITECTURE)' == 'x86' or '$(PROCESSOR_ARCHITECTURE)' == 'X86'">x86</NuGetNativeArchitecture>
+    <NuGetNativeArchitecture Condition="'$(NuGetNativeArchitecture)' == ''">x64</NuGetNativeArchitecture>
+    <NuGetNativeRuntimeIdentifier>$(NuGetNativePlatform)-$(NuGetNativeArchitecture)</NuGetNativeRuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +46,11 @@
     <Compile Include="$(RustBindingsFile)" Link="Interop\Generated\NativeMethods.g.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+    <None Include="..\LICENSE.txt" Pack="true" PackagePath="\" Link="LICENSE.txt" />
+  </ItemGroup>
+
   <Target Name="EnsureRustSubmodule" BeforeTargets="Build" Condition="!Exists('$(RustProjectDir)\Cargo.toml')">
     <Warning Text="Rust submodule not found at $(RustProjectDir). Run: git submodule update --init --recursive" />
   </Target>
@@ -33,17 +60,15 @@
     <Exec Command="cargo build --manifest-path &quot;$(RustProjectDir)\Cargo.toml&quot; -p framework_dotnet_ffi --release" />
   </Target>
 
-  <Target Name="IncludeRustNativeLibraryInOutput" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="Exists('$(RustNativeOutputDir)\$(RustNativeLibraryName)')">
+  <Target Name="IncludeRustNativeLibraryInOutput" BeforeTargets="GetCopyToOutputDirectoryItems;GenerateNuspec" Condition="Exists('$(RustNativeOutputDir)\$(RustNativeLibraryName)')">
     <ItemGroup>
       <ContentWithTargetPath Include="$(RustNativeOutputDir)\$(RustNativeLibraryName)">
         <TargetPath>$(RustNativeLibraryName)</TargetPath>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </ContentWithTargetPath>
+
+      <None Include="$(RustNativeOutputDir)\$(RustNativeLibraryName)" Pack="true" PackagePath="runtimes\$(NuGetNativeRuntimeIdentifier)\native\" Visible="false" />
     </ItemGroup>
   </Target>
-
-  <ItemGroup>
-    <Compile Update="C:\Users\richa\source\repos\framework-dotnet\framework-dotnet\..\framework-system\\framework_dotnet_ffi\csharp\NativeMethods.g.cs" Link="Generated\NativeMethods.g.cs" />
-  </ItemGroup>
 
 </Project>

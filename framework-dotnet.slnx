@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
+  </Folder>
   <Project Path="framework-dotnet-cli-test/framework-dotnet-cli-test.csproj" />
   <Project Path="framework-dotnet/framework-dotnet.csproj" />
 </Solution>
