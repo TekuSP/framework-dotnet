@@ -41,9 +41,3 @@ var thermal = ec.GetThermalSnapshot();
 Console.WriteLine($"Battery: {power.ChargePercentage}%");
 Console.WriteLine($"Temperature 0: {thermal.Temperature0.Celsius}C");
 ```
-
-## NuGet packaging
-
-The `framework-dotnet` project is configured to build the Rust native library before the managed project builds and to include the generated interop layer and native library in the resulting NuGet package.
-
-The packaged native binary represents the platform that built the package, so cross-platform publishing should be done by building and packing on each target platform or by extending the packaging process to collect binaries for multiple runtimes.
