@@ -13,10 +13,12 @@ concurrency:
 permissions:
   packages: write
   contents: read
+  actions: write
 
 env:
   DOTNET_VERSION: '10.0.x'
   VERSION_PREFIX: '0.1'
+  ARTIFACT_OUTPUT: '${{ github.workspace }}/artifacts'
 
 jobs:
   build-native:
@@ -76,6 +78,15 @@ jobs:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
         if-no-files-found: error
 
+    - name: "Cancel if failure"
+      if: ${{ failure() }}
+      uses: potiuk/cancel-workflow-runs@master
+      with:
+        cancelMode: self
+        cancelFutureDuplicates: false
+        selfPreservation: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+
   pack:
     name: Pack NuGet
     needs: build-native
@@ -124,11 +135,30 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
+    - name: Build
+      run: >-
+        dotnet build framework-dotnet/framework-dotnet.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
+        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:SkipRustBuild=true
+        -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}\artifacts\win-x64\framework_dotnet_ffi.dll
+        -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}\artifacts\win-arm64\framework_dotnet_ffi.dll
+        -p:FrameworkDotnetLinuxNativeLibraryPath=${{ github.workspace }}\artifacts\linux-x64\libframework_dotnet_ffi.so
+        -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}\artifacts\linux-arm64\libframework_dotnet_ffi.so
+
     - name: Pack NuGet package
       run: >-
         dotnet pack framework-dotnet/framework-dotnet.csproj
+        -v normal
         --configuration Release
         --no-restore
+        --no-build
+        --OutputDirectory ${{ env.ARTIFACT_OUTPUT }}
         -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
         -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
@@ -143,10 +173,10 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: framework-dotnet-nuget
-        path: framework-dotnet/bin/Release/*.nupkg
+        path: ${{ env.ARTIFACT_OUTPUT }}
         if-no-files-found: error
     - name: Push nugets to Github
       run: |
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
-        nuget push "**/framework-dotnet/bin/Release/*.nupkg" -Source "GitHub"
+        nuget push "${{ env.ARTIFACT_OUTPUT }}*.nupkg" -Source "GitHub"
 
