@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+
 using GroupedNativeMethodsGenerator;
 
 namespace Framework.System.Interop;
@@ -16,25 +17,9 @@ internal static unsafe partial class NativeMethods
         NativeLibrary.SetDllImportResolver(typeof(NativeMethods).Assembly, DllImportResolver);
     }
 
-    internal static FrameworkEcHandle* OpenDefaultOrThrow()
+    internal static bool IsLibraryAvailable()
     {
-        FrameworkEcHandle* handle;
-        framework_ec_open_default(&handle).ThrowIfError();
-        return handle;
-    }
-
-    internal static FrameworkEcHandle* OpenWithDriverOrThrow(FrameworkEcDriver driver)
-    {
-        FrameworkEcHandle* handle;
-        framework_ec_open_with_driver(driver, &handle).ThrowIfError();
-        return handle;
-    }
-
-    internal static FrameworkPlatform GetPlatformOrThrow()
-    {
-        FrameworkPlatform platform;
-        framework_get_platform(&platform).ThrowIfError();
-        return platform;
+        return ConfirmExistanceOfDll(DllName, typeof(NativeMethods).Assembly, null);
     }
 
     internal static FrameworkPlatformFamily GetPlatformFamilyOrThrow()
@@ -42,6 +27,13 @@ internal static unsafe partial class NativeMethods
         FrameworkPlatformFamily family;
         framework_get_platform_family(&family).ThrowIfError();
         return family;
+    }
+
+    internal static FrameworkPlatform GetPlatformOrThrow()
+    {
+        FrameworkPlatform platform;
+        framework_get_platform(&platform).ThrowIfError();
+        return platform;
     }
 
     internal static string GetProductNameOrThrow()
@@ -57,6 +49,20 @@ internal static unsafe partial class NativeMethods
         {
             buffer.Free();
         }
+    }
+
+    internal static FrameworkEcHandle* OpenDefaultOrThrow()
+    {
+        FrameworkEcHandle* handle;
+        framework_ec_open_default(&handle).ThrowIfError();
+        return handle;
+    }
+
+    internal static FrameworkEcHandle* OpenWithDriverOrThrow(FrameworkEcDriver driver)
+    {
+        FrameworkEcHandle* handle;
+        framework_ec_open_with_driver(driver, &handle).ThrowIfError();
+        return handle;
     }
 
     private static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
@@ -82,22 +88,24 @@ internal static unsafe partial class NativeMethods
         return IntPtr.Zero;
     }
 
-    private static bool TryLoadFromDirectory(string directory, string fileName, Assembly assembly, DllImportSearchPath? searchPath, out IntPtr handle)
-    {
-        handle = IntPtr.Zero;
-
-        if (string.IsNullOrWhiteSpace(directory))
-        {
-            return false;
-        }
-
-        var candidatePath = Path.Combine(directory, fileName);
-        return File.Exists(candidatePath) && NativeLibrary.TryLoad(candidatePath, assembly, searchPath, out handle);
-    }
-
     private static string GetDirectoryOrDefault(string? directory)
     {
         return string.IsNullOrWhiteSpace(directory) ? AppContext.BaseDirectory : directory;
+    }
+
+    private static string GetLibraryFileName()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return $"{DllName}.dll";
+        }
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            return $"lib{DllName}.dylib";
+        }
+
+        return $"lib{DllName}.so";
     }
 
     private static string GetRuntimeIdentifier()
@@ -119,18 +127,48 @@ internal static unsafe partial class NativeMethods
         return $"{platform}-{architecture}";
     }
 
-    private static string GetLibraryFileName()
+    private static bool TryLoadFromDirectory(string directory, string fileName, Assembly assembly, DllImportSearchPath? searchPath, out IntPtr handle)
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        handle = IntPtr.Zero;
+
+        if (string.IsNullOrWhiteSpace(directory))
         {
-            return $"{DllName}.dll";
+            return false;
         }
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        var candidatePath = Path.Combine(directory, fileName);
+        return File.Exists(candidatePath) && NativeLibrary.TryLoad(candidatePath, assembly, searchPath, out handle);
+    }
+
+    private static bool TryVerifyFromDirectory(string directory, string fileName, Assembly assembly, DllImportSearchPath? searchPath)
+    {
+        if (string.IsNullOrWhiteSpace(directory))
         {
-            return $"lib{DllName}.dylib";
+            return false;
         }
 
-        return $"lib{DllName}.so";
+        var candidatePath = Path.Combine(directory, fileName);
+        return File.Exists(candidatePath);
+    }
+
+    private static bool ConfirmExistanceOfDll(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    {
+        if (!string.Equals(libraryName, DllName, StringComparison.Ordinal))
+        {
+            return false;
+        }
+        var assemblyDirectory = GetDirectoryOrDefault(Path.GetDirectoryName(assembly.Location));
+        var baseDirectory = GetDirectoryOrDefault(AppContext.BaseDirectory);
+        var fileName = GetLibraryFileName();
+        var runtimeIdentifier = GetRuntimeIdentifier();
+
+        if (TryVerifyFromDirectory(assemblyDirectory, fileName, assembly, searchPath) ||
+            TryVerifyFromDirectory(baseDirectory, fileName, assembly, searchPath) ||
+            TryVerifyFromDirectory(Path.Combine(assemblyDirectory, "runtimes", runtimeIdentifier, "native"), fileName, assembly, searchPath) ||
+            TryVerifyFromDirectory(Path.Combine(baseDirectory, "runtimes", runtimeIdentifier, "native"), fileName, assembly, searchPath))
+        {
+            return true;
+        }
+        return false;
     }
 }
