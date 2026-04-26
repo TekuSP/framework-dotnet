@@ -184,5 +184,5 @@ jobs:
     - name: Push nugets to Github
       run: |
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
-        nuget push "${{ env.ARTIFACT_OUTPUT }}*.nupkg" -Source "GitHub"
+        nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source "GitHub"
 
