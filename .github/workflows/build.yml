@@ -54,6 +54,12 @@ jobs:
     - name: Setup Rust toolchain
       run: rustup show
 
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: |
+          framework-system -> target
+
     - name: Install Linux Framework dependencies
       if: runner.os == 'Linux'
       run: |
@@ -158,7 +164,7 @@ jobs:
         --configuration Release
         --no-restore
         --no-build
-        --OutputDirectory ${{ env.ARTIFACT_OUTPUT }}
+        --output ${{ env.ARTIFACT_OUTPUT }}
         -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
         -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
