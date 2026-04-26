@@ -9,6 +9,7 @@ internal class Program
     {
         try
         {
+            FrameworkSystem FrameworkSystem = new FrameworkSystem();
             Console.WriteLine($"Product: {FrameworkSystem.GetProductName()}");
             Console.WriteLine($"Platform: {FrameworkSystem.GetPlatform()}");
             Console.WriteLine($"Family: {FrameworkSystem.GetPlatformFamily()}");

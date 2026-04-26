@@ -1,5 +1,7 @@
 using System;
 
+using FrameworkDotnet.Exceptions;
+
 namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkStatus
@@ -12,7 +14,7 @@ internal unsafe partial struct FrameworkStatus
     {
         if (IsFailure)
         {
-            throw new InvalidOperationException($"Framework interop call failed with {code} (detail: {detail}).");
+            throw new FrameworkInteropException(code, detail);
         }
     }
 }

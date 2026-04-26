@@ -47,26 +47,10 @@
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" Link="README.md" />
     <None Include="..\LICENSE.txt" Pack="true" PackagePath="\" Link="LICENSE.txt" />
-    <None Include="$(FrameworkDotnetWindowsNativeLibraryPath)"
-          Pack="true"
-          PackagePath="runtimes\win-x64\native\"
-          Visible="false"
-          Condition="Exists('$(FrameworkDotnetWindowsNativeLibraryPath)')" />
-    <None Include="$(FrameworkDotnetWindowsArm64NativeLibraryPath)"
-          Pack="true"
-          PackagePath="runtimes\win-arm64\native\"
-          Visible="false"
-          Condition="Exists('$(FrameworkDotnetWindowsArm64NativeLibraryPath)')" />
-    <None Include="$(FrameworkDotnetLinuxNativeLibraryPath)"
-          Pack="true"
-          PackagePath="runtimes\linux-x64\native\"
-          Visible="false"
-          Condition="Exists('$(FrameworkDotnetLinuxNativeLibraryPath)')" />
-    <None Include="$(FrameworkDotnetLinuxArm64NativeLibraryPath)"
-          Pack="true"
-          PackagePath="runtimes\linux-arm64\native\"
-          Visible="false"
-          Condition="Exists('$(FrameworkDotnetLinuxArm64NativeLibraryPath)')" />
+    <None Include="$(FrameworkDotnetWindowsNativeLibraryPath)" Pack="true" PackagePath="runtimes\win-x64\native\" Visible="false" Condition="Exists('$(FrameworkDotnetWindowsNativeLibraryPath)')" />
+    <None Include="$(FrameworkDotnetWindowsArm64NativeLibraryPath)" Pack="true" PackagePath="runtimes\win-arm64\native\" Visible="false" Condition="Exists('$(FrameworkDotnetWindowsArm64NativeLibraryPath)')" />
+    <None Include="$(FrameworkDotnetLinuxNativeLibraryPath)" Pack="true" PackagePath="runtimes\linux-x64\native\" Visible="false" Condition="Exists('$(FrameworkDotnetLinuxNativeLibraryPath)')" />
+    <None Include="$(FrameworkDotnetLinuxArm64NativeLibraryPath)" Pack="true" PackagePath="runtimes\linux-arm64\native\" Visible="false" Condition="Exists('$(FrameworkDotnetLinuxArm64NativeLibraryPath)')" />
   </ItemGroup>
 
   <Target Name="EnsureRustSubmodule" BeforeTargets="Build" Condition="'$(SkipRustBuild)' != 'true' and !Exists('$(RustProjectDir)\Cargo.toml')">
@@ -92,14 +76,10 @@
   </Target>
 
   <Target Name="WarnIfPackNativeAssetsMissing" BeforeTargets="GenerateNuspec">
-    <Warning Condition="!Exists('$(FrameworkDotnetWindowsNativeLibraryPath)')"
-             Text="Windows native asset not found at $(FrameworkDotnetWindowsNativeLibraryPath). The NuGet package will not contain runtimes/win-x64/native/framework_dotnet_ffi.dll." />
-    <Warning Condition="!Exists('$(FrameworkDotnetWindowsArm64NativeLibraryPath)')"
-             Text="Windows ARM64 native asset not found at $(FrameworkDotnetWindowsArm64NativeLibraryPath). Build the Rust library for aarch64-pc-windows-msvc or set FrameworkDotnetWindowsArm64NativeLibraryPath before packing if you want runtimes/win-arm64/native/framework_dotnet_ffi.dll included." />
-    <Warning Condition="!Exists('$(FrameworkDotnetLinuxNativeLibraryPath)')"
-             Text="Linux native asset not found at $(FrameworkDotnetLinuxNativeLibraryPath). Build the Rust library for x86_64-unknown-linux-gnu or set FrameworkDotnetLinuxNativeLibraryPath before packing if you want runtimes/linux-x64/native/libframework_dotnet_ffi.so included." />
-    <Warning Condition="!Exists('$(FrameworkDotnetLinuxArm64NativeLibraryPath)')"
-             Text="Linux ARM64 native asset not found at $(FrameworkDotnetLinuxArm64NativeLibraryPath). Build the Rust library for aarch64-unknown-linux-gnu or set FrameworkDotnetLinuxArm64NativeLibraryPath before packing if you want runtimes/linux-arm64/native/libframework_dotnet_ffi.so included." />
+    <Warning Condition="!Exists('$(FrameworkDotnetWindowsNativeLibraryPath)')" Text="Windows native asset not found at $(FrameworkDotnetWindowsNativeLibraryPath). The NuGet package will not contain runtimes/win-x64/native/framework_dotnet_ffi.dll." />
+    <Warning Condition="!Exists('$(FrameworkDotnetWindowsArm64NativeLibraryPath)')" Text="Windows ARM64 native asset not found at $(FrameworkDotnetWindowsArm64NativeLibraryPath). Build the Rust library for aarch64-pc-windows-msvc or set FrameworkDotnetWindowsArm64NativeLibraryPath before packing if you want runtimes/win-arm64/native/framework_dotnet_ffi.dll included." />
+    <Warning Condition="!Exists('$(FrameworkDotnetLinuxNativeLibraryPath)')" Text="Linux native asset not found at $(FrameworkDotnetLinuxNativeLibraryPath). Build the Rust library for x86_64-unknown-linux-gnu or set FrameworkDotnetLinuxNativeLibraryPath before packing if you want runtimes/linux-x64/native/libframework_dotnet_ffi.so included." />
+    <Warning Condition="!Exists('$(FrameworkDotnetLinuxArm64NativeLibraryPath)')" Text="Linux ARM64 native asset not found at $(FrameworkDotnetLinuxArm64NativeLibraryPath). Build the Rust library for aarch64-unknown-linux-gnu or set FrameworkDotnetLinuxArm64NativeLibraryPath before packing if you want runtimes/linux-arm64/native/libframework_dotnet_ffi.so included." />
   </Target>
 
 </Project>
