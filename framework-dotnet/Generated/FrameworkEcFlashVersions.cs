@@ -1,4 +1,5 @@
 using FrameworkDotnet.Generated;
+using ManagedFlashSnapshot = FrameworkDotnet.Snapshots.FrameworkEcFlashSnapshot;
 
 namespace Framework.System.Interop;
 
@@ -18,5 +19,15 @@ internal unsafe partial struct FrameworkEcFlashVersions
         {
             return InteropStringHelpers.ReadNullTerminatedUtf8(value, 32);
         }
+    }
+
+    internal readonly ManagedFlashSnapshot ToManagedSnapshot()
+    {
+        return new ManagedFlashSnapshot(ToManagedCurrentImage(), GetRoVersion(), GetRwVersion());
+    }
+
+    private readonly global::FrameworkDotnet.Enums.FrameworkEcCurrentImage ToManagedCurrentImage()
+    {
+        return (global::FrameworkDotnet.Enums.FrameworkEcCurrentImage)(int)current_image;
     }
 }

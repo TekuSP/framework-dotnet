@@ -31,7 +31,7 @@ public sealed record FrameworkThermalSnapshot
     /// <param name="fanStalled1">A value indicating whether the second fan is stalled.</param>
     /// <param name="fanStalled2">A value indicating whether the third fan is stalled.</param>
     /// <param name="fanStalled3">A value indicating whether the fourth fan is stalled.</param>
-    public FrameworkThermalSnapshot(byte fanCount, FrameworkTemperatureReading temperature0, FrameworkTemperatureReading temperature1, FrameworkTemperatureReading temperature2, FrameworkTemperatureReading temperature3, FrameworkTemperatureReading temperature4, FrameworkTemperatureReading temperature5, FrameworkTemperatureReading temperature6, FrameworkTemperatureReading temperature7, ushort fanRpm0, ushort fanRpm1, ushort fanRpm2, ushort fanRpm3, bool fanPresent0, bool fanPresent1, bool fanPresent2, bool fanPresent3, bool fanStalled0, bool fanStalled1, bool fanStalled2, bool fanStalled3)
+    public FrameworkThermalSnapshot(byte fanCount, FrameworkTemperatureSnapshot temperature0, FrameworkTemperatureSnapshot temperature1, FrameworkTemperatureSnapshot temperature2, FrameworkTemperatureSnapshot temperature3, FrameworkTemperatureSnapshot temperature4, FrameworkTemperatureSnapshot temperature5, FrameworkTemperatureSnapshot temperature6, FrameworkTemperatureSnapshot temperature7, ushort fanRpm0, ushort fanRpm1, ushort fanRpm2, ushort fanRpm3, bool fanPresent0, bool fanPresent1, bool fanPresent2, bool fanPresent3, bool fanStalled0, bool fanStalled1, bool fanStalled2, bool fanStalled3)
     {
         FanCount = fanCount;
         Temperature0 = temperature0;
@@ -64,42 +64,42 @@ public sealed record FrameworkThermalSnapshot
     /// <summary>
     /// Gets the first temperature reading.
     /// </summary>
-    public FrameworkTemperatureReading Temperature0 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature0 { get; init; }
 
     /// <summary>
     /// Gets the second temperature reading.
     /// </summary>
-    public FrameworkTemperatureReading Temperature1 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature1 { get; init; }
 
     /// <summary>
     /// Gets the third temperature reading.
     /// </summary>
-    public FrameworkTemperatureReading Temperature2 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature2 { get; init; }
 
     /// <summary>
     /// Gets the fourth temperature reading.
     /// </summary>
-    public FrameworkTemperatureReading Temperature3 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature3 { get; init; }
 
     /// <summary>
     /// Gets the fifth temperature reading.
     /// </summary>
-    public FrameworkTemperatureReading Temperature4 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature4 { get; init; }
 
     /// <summary>
     /// Gets the sixth temperature reading.
     /// </summary>
-    public FrameworkTemperatureReading Temperature5 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature5 { get; init; }
 
     /// <summary>
     /// Gets the seventh temperature reading.
     /// </summary>
-    public FrameworkTemperatureReading Temperature6 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature6 { get; init; }
 
     /// <summary>
     /// Gets the eighth temperature reading.
     /// </summary>
-    public FrameworkTemperatureReading Temperature7 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature7 { get; init; }
 
     /// <summary>
     /// Gets the first fan RPM value.
@@ -164,7 +164,7 @@ public sealed record FrameworkThermalSnapshot
     /// <summary>
     /// Gets all temperature readings in index order.
     /// </summary>
-    public IReadOnlyList<FrameworkTemperatureReading> Temperatures => [Temperature0, Temperature1, Temperature2, Temperature3, Temperature4, Temperature5, Temperature6, Temperature7];
+    public IReadOnlyList<FrameworkTemperatureSnapshot> Temperatures => [Temperature0, Temperature1, Temperature2, Temperature3, Temperature4, Temperature5, Temperature6, Temperature7];
 
     /// <summary>
     /// Gets all fan RPM values in index order.

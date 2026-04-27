@@ -6,6 +6,11 @@ namespace FrameworkDotnet.Enums;
 public enum FrameworkEcDriver
 {
     /// <summary>
+    /// The driver could not be determined.
+    /// </summary>
+    Unknown = -1,
+
+    /// <summary>
     /// Uses the PortIO driver implementation.
     /// </summary>
     Portio = 0,

@@ -50,6 +50,18 @@ internal unsafe partial struct FrameworkByteBuffer : IDisposable
         return Encoding.UTF8.GetString(AsSpan());
     }
 
+    public string ToUtf8StringAndFree()
+    {
+        try
+        {
+            return ToUtf8String();
+        }
+        finally
+        {
+            Free();
+        }
+    }
+
     public void Free()
     {
         if (ptr == null)

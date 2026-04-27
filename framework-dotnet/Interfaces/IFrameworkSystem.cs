@@ -31,7 +31,7 @@ public interface IFrameworkSystem
     /// Gets the detected Framework platform.
     /// </summary>
     /// <returns>The detected platform.</returns>
-    /// <exception cref="FrameworkInteropException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -41,7 +41,7 @@ public interface IFrameworkSystem
     /// Gets the detected Framework platform family.
     /// </summary>
     /// <returns>The detected platform family.</returns>
-    /// <exception cref="FrameworkInteropException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -51,7 +51,7 @@ public interface IFrameworkSystem
     /// Gets the product name reported by the native library.
     /// </summary>
     /// <returns>The product name.</returns>
-    /// <exception cref="FrameworkInteropException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -71,7 +71,7 @@ public interface IFrameworkSystem
     /// Opens the default embedded controller connection.
     /// </summary>
     /// <returns>An open EC connection.</returns>
-    /// <exception cref="FrameworkInteropException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -83,7 +83,7 @@ public interface IFrameworkSystem
     /// </summary>
     /// <param name="driver">The driver to use.</param>
     /// <returns>An open EC connection.</returns>
-    /// <exception cref="FrameworkInteropException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>

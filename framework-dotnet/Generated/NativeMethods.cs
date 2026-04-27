@@ -24,45 +24,37 @@ internal static unsafe partial class NativeMethods
 
     internal static FrameworkPlatformFamily GetPlatformFamilyOrThrow()
     {
-        FrameworkPlatformFamily family;
-        framework_get_platform_family(&family).ThrowIfError();
-        return family;
+        return framework_get_platform_family().GetValueOrThrow();
     }
 
     internal static FrameworkPlatform GetPlatformOrThrow()
     {
-        FrameworkPlatform platform;
-        framework_get_platform(&platform).ThrowIfError();
-        return platform;
+        return framework_get_platform().GetValueOrThrow();
     }
 
     internal static string GetProductNameOrThrow()
     {
-        FrameworkByteBuffer buffer = default;
-        framework_get_product_name(&buffer).ThrowIfError();
-
-        try
-        {
-            return buffer.ToUtf8String();
-        }
-        finally
-        {
-            buffer.Free();
-        }
+        return framework_get_product_name().GetValueOrThrow();
     }
 
     internal static FrameworkEcHandle* OpenDefaultOrThrow()
     {
-        FrameworkEcHandle* handle;
-        framework_ec_open_default(&handle).ThrowIfError();
-        return handle;
+        return framework_ec_open_default().GetValueOrThrow();
     }
 
     internal static FrameworkEcHandle* OpenWithDriverOrThrow(FrameworkEcDriver driver)
     {
-        FrameworkEcHandle* handle;
-        framework_ec_open_with_driver(driver, &handle).ThrowIfError();
-        return handle;
+        return framework_ec_open_with_driver(driver).GetValueOrThrow();
+    }
+
+    internal static string? GetStatusDescriptionOrEmpty(FrameworkStatus status)
+    {
+        return framework_status_get_description(status).GetValueOrDefault();
+    }
+
+    internal static string? GetDeviceErrorMessageOrEmpty(FrameworkStatus status)
+    {
+        return framework_status_get_device_error_message(status).GetValueOrDefault();
     }
 
     private static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)

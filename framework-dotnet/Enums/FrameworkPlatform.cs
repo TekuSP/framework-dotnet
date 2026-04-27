@@ -64,4 +64,9 @@ public enum FrameworkPlatform
     /// Unknown system platform.
     /// </summary>
     UnknownSystem = 11,
+
+    /// <summary>
+    /// Intel Core Ultra 3 platform.
+    /// </summary>
+    IntelCoreUltra3 = 12,
 }
