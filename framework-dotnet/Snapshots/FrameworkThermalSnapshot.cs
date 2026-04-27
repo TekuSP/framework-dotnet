@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace FrameworkDotnet.Snapshots;
 
@@ -11,43 +12,41 @@ public sealed record FrameworkThermalSnapshot
     /// Initializes a new instance of the <see cref="FrameworkThermalSnapshot"/> class.
     /// </summary>
     /// <param name="fanCount">The number of fans reported in the snapshot.</param>
-    /// <param name="temperature0">The first temperature reading.</param>
-    /// <param name="temperature1">The second temperature reading.</param>
-    /// <param name="temperature2">The third temperature reading.</param>
-    /// <param name="temperature3">The fourth temperature reading.</param>
-    /// <param name="temperature4">The fifth temperature reading.</param>
-    /// <param name="temperature5">The sixth temperature reading.</param>
-    /// <param name="temperature6">The seventh temperature reading.</param>
-    /// <param name="temperature7">The eighth temperature reading.</param>
-    /// <param name="fan0">The first fan snapshot.</param>
-    /// <param name="fan1">The second fan snapshot.</param>
-    /// <param name="fan2">The third fan snapshot.</param>
-    /// <param name="fan3">The fourth fan snapshot.</param>
-    public FrameworkThermalSnapshot(byte fanCount, byte sensorCount, FrameworkTemperatureSnapshot temperature0, FrameworkTemperatureSnapshot temperature1, FrameworkTemperatureSnapshot temperature2, FrameworkTemperatureSnapshot temperature3, FrameworkTemperatureSnapshot temperature4, FrameworkTemperatureSnapshot temperature5, FrameworkTemperatureSnapshot temperature6, FrameworkTemperatureSnapshot temperature7, FrameworkFanSnapshot fan0, FrameworkFanSnapshot fan1, FrameworkFanSnapshot fan2, FrameworkFanSnapshot fan3)
+    /// <param name="sensorCount">The number of sensors reported in the snapshot.</param>
+    /// <param name="temperature_0">The first temperature reading.</param>
+    /// <param name="temperature_1">The second temperature reading.</param>
+    /// <param name="temperature_2">The third temperature reading.</param>
+    /// <param name="temperature_3">The fourth temperature reading.</param>
+    /// <param name="temperature_4">The fifth temperature reading.</param>
+    /// <param name="temperature_5">The sixth temperature reading.</param>
+    /// <param name="temperature_6">The seventh temperature reading.</param>
+    /// <param name="temperature_7">The eighth temperature reading.</param>
+    /// <param name="fan_0">The first fan snapshot.</param>
+    /// <param name="fan_1">The second fan snapshot.</param>
+    /// <param name="fan_2">The third fan snapshot.</param>
+    /// <param name="fan_3">The fourth fan snapshot.</param>
+    public FrameworkThermalSnapshot(byte fanCount, byte sensorCount, FrameworkTemperatureSnapshot temperature_0, FrameworkTemperatureSnapshot temperature_1, FrameworkTemperatureSnapshot temperature_2, FrameworkTemperatureSnapshot temperature_3, FrameworkTemperatureSnapshot temperature_4, FrameworkTemperatureSnapshot temperature_5, FrameworkTemperatureSnapshot temperature_6, FrameworkTemperatureSnapshot temperature_7, FrameworkFanSnapshot fan_0, FrameworkFanSnapshot fan_1, FrameworkFanSnapshot fan_2, FrameworkFanSnapshot fan_3)
     {
         FanCount = fanCount;
         SensorCount = sensorCount;
-        Temperature0 = temperature0;
-        Temperature1 = temperature1;
-        Temperature2 = temperature2;
-        Temperature3 = temperature3;
-        Temperature4 = temperature4;
-        Temperature5 = temperature5;
-        Temperature6 = temperature6;
-        Temperature7 = temperature7;
-        Fan0 = fan0;
-        Fan1 = fan1;
-        Fan2 = fan2;
-        Fan3 = fan3;
+        Temperature_0 = temperature_0;
+        Temperature_1 = temperature_1;
+        Temperature_2 = temperature_2;
+        Temperature_3 = temperature_3;
+        Temperature_4 = temperature_4;
+        Temperature_5 = temperature_5;
+        Temperature_6 = temperature_6;
+        Temperature_7 = temperature_7;
+        Fan_0 = fan_0;
+        Fan_1 = fan_1;
+        Fan_2 = fan_2;
+        Fan_3 = fan_3;
     }
 
     /// <summary>
     /// Gets the number of sensors reported in the snapshot.
     /// </summary>
-    public byte SensorCount
-    {
-        get; init;
-    }
+    public byte SensorCount { get; init; }
 
     /// <summary>
     /// Gets the number of fans reported in the snapshot.
@@ -57,82 +56,82 @@ public sealed record FrameworkThermalSnapshot
     /// <summary>
     /// Gets the first temperature reading.
     /// </summary>
-    public FrameworkTemperatureSnapshot Temperature0 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature_0 { get; init; }
 
     /// <summary>
     /// Gets the second temperature reading.
     /// </summary>
-    public FrameworkTemperatureSnapshot Temperature1 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature_1 { get; init; }
 
     /// <summary>
     /// Gets the third temperature reading.
     /// </summary>
-    public FrameworkTemperatureSnapshot Temperature2 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature_2 { get; init; }
 
     /// <summary>
     /// Gets the fourth temperature reading.
     /// </summary>
-    public FrameworkTemperatureSnapshot Temperature3 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature_3 { get; init; }
 
     /// <summary>
     /// Gets the fifth temperature reading.
     /// </summary>
-    public FrameworkTemperatureSnapshot Temperature4 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature_4 { get; init; }
 
     /// <summary>
     /// Gets the sixth temperature reading.
     /// </summary>
-    public FrameworkTemperatureSnapshot Temperature5 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature_5 { get; init; }
 
     /// <summary>
     /// Gets the seventh temperature reading.
     /// </summary>
-    public FrameworkTemperatureSnapshot Temperature6 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature_6 { get; init; }
 
     /// <summary>
     /// Gets the eighth temperature reading.
     /// </summary>
-    public FrameworkTemperatureSnapshot Temperature7 { get; init; }
+    public FrameworkTemperatureSnapshot Temperature_7 { get; init; }
 
     /// <summary>
     /// Gets the first fan snapshot.
     /// </summary>
-    public FrameworkFanSnapshot Fan0
-    {
-        get;
-    }
+    public FrameworkFanSnapshot Fan_0 { get; init; }
 
     /// <summary>
     /// Gets the second fan snapshot.
     /// </summary>
-    public FrameworkFanSnapshot Fan1
-    {
-        get;
-    }
+    public FrameworkFanSnapshot Fan_1 { get; init; }
 
     /// <summary>
     /// Gets the third fan snapshot.
     /// </summary>
-    public FrameworkFanSnapshot Fan2
-    {
-        get;
-    }
+    public FrameworkFanSnapshot Fan_2 { get; init; }
 
     /// <summary>
     /// Gets the fourth fan snapshot.
     /// </summary>
-    public FrameworkFanSnapshot Fan3
-    {
-        get;
-    }
+    public FrameworkFanSnapshot Fan_3 { get; init; }
 
     /// <summary>
     /// Gets all temperature readings in index order.
     /// </summary>
-    public IReadOnlyList<FrameworkTemperatureSnapshot> Temperatures => [Temperature0, Temperature1, Temperature2, Temperature3, Temperature4, Temperature5, Temperature6, Temperature7];
+    public IReadOnlyList<FrameworkTemperatureSnapshot> Temperatures => [Temperature_0, Temperature_1, Temperature_2, Temperature_3, Temperature_4, Temperature_5, Temperature_6, Temperature_7];
+
+    /// <summary>
+    /// Gets the reported temperature readings in index order.
+    /// </summary>
+    /// <seealso cref="SensorCount"/>
+    public IEnumerable<FrameworkTemperatureSnapshot> ReportedTemperatures => Temperatures.Take(SensorCount);
 
     /// <summary>
     /// Gets all fan snapshots in index order.
     /// </summary>
-    public IReadOnlyList<FrameworkFanSnapshot> Fans => [Fan0, Fan1, Fan2, Fan3];
+    public IReadOnlyList<FrameworkFanSnapshot> Fans => [Fan_0, Fan_1, Fan_2, Fan_3];
+
+    /// <summary>
+    /// Gets the reported fan snapshots in index order.
+    /// </summary>
+    /// <seealso cref="FanCount"/>
+    public IEnumerable<FrameworkFanSnapshot> ReportedFans => Fans.Take(FanCount);
 }

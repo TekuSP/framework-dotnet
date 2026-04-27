@@ -32,7 +32,7 @@ internal class Program
 
             var thermal = ec.GetThermalSnapshot();
             Console.WriteLine($"Fan count: {thermal.FanCount}");
-            Console.WriteLine($"Temp0: {thermal.Temperature0.Celsius}C ({thermal.Temperature0.State})");
+            Console.WriteLine($"Temp0: {thermal.Temperature_0.Temperature.DegreesCelsius}C ({thermal.Temperature_0.State})");
 
             var restoreAutoFanControlResponse = ec.RestoreAutoFanControl(0);
             Console.WriteLine($"Auto fan control restored for fan {restoreAutoFanControlResponse.FanIndex}");

@@ -2,6 +2,8 @@ using FrameworkDotnet.Exceptions;
 using FrameworkDotnet.Exceptions.InvalidArgument;
 using FrameworkDotnet.Responses;
 
+using UnitsNet;
+
 namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkEcSetFanDutyResult
@@ -16,6 +18,6 @@ internal unsafe partial struct FrameworkEcSetFanDutyResult
     }
     internal readonly FrameworkSetFanDutyResponse ToManagedResponse()
     {
-        return new FrameworkSetFanDutyResponse(fan_index, percent);
+        return new FrameworkSetFanDutyResponse(fan_index, Ratio.FromPercent(percent));
     }
 }

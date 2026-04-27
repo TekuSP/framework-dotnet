@@ -7,6 +7,8 @@ using FrameworkDotnet.Snapshots;
 
 using Microsoft.Win32.SafeHandles;
 
+using UnitsNet;
+
 using Native = Framework.System.Interop;
 
 namespace FrameworkDotnet;
@@ -76,21 +78,21 @@ public sealed class FrameworkEcConnection : SafeHandleZeroOrMinusOneIsInvalid, I
     }
 
     /// <inheritdoc/>
-    public FrameworkSetFanRpmResponse SetFanRpm(int fanIndex, uint rpm)
+    public FrameworkSetFanRpmResponse SetFanRpm(int fanIndex, RotationalSpeed targetSpeed)
     {
         unsafe
         {
-            var result = Native.NativeMethods.framework_ec_set_fan_rpm(HandlePointer, fanIndex, rpm);
+            var result = Native.NativeMethods.framework_ec_set_fan_rpm(HandlePointer, fanIndex, ToUInt32(targetSpeed.RevolutionsPerMinute, nameof(targetSpeed)));
             return result.GetValueOrThrow().ToManagedResponse();
         }
     }
 
     /// <inheritdoc/>
-    public FrameworkSetFanDutyResponse SetFanDuty(int fanIndex, uint percent)
+    public FrameworkSetFanDutyResponse SetFanDuty(int fanIndex, Ratio dutyCycle)
     {
         unsafe
         {
-            var result = Native.NativeMethods.framework_ec_set_fan_duty(HandlePointer, fanIndex, percent);
+            var result = Native.NativeMethods.framework_ec_set_fan_duty(HandlePointer, fanIndex, ToUInt32(dutyCycle.Percent, nameof(dutyCycle)));
             return result.GetValueOrThrow().ToManagedResponse();
         }
     }
@@ -135,6 +137,23 @@ public sealed class FrameworkEcConnection : SafeHandleZeroOrMinusOneIsInvalid, I
         var connection = new FrameworkEcConnection();
         connection.SetHandle(nativeHandle);
         return connection;
+    }
+
+    private static uint ToUInt32(double value, string paramName)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(value, paramName);
+
+        if (double.IsNaN(value) || double.IsInfinity(value) || value > uint.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException(paramName, value, "The value must be a finite unsigned 32-bit whole number.");
+        }
+
+        if (value != Math.Truncate(value))
+        {
+            throw new ArgumentOutOfRangeException(paramName, value, "The value must be a whole number.");
+        }
+
+        return (uint)value;
     }
 
     private unsafe Native.FrameworkEcHandle* HandlePointer

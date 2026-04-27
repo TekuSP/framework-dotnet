@@ -1,3 +1,5 @@
+using UnitsNet;
+
 namespace FrameworkDotnet.Responses;
 
 /// <summary>
@@ -9,11 +11,11 @@ public sealed record FrameworkSetFanRpmResponse
     /// Initializes a new instance of the <see cref="FrameworkSetFanRpmResponse"/> class.
     /// </summary>
     /// <param name="fanIndex">The zero-based fan index.</param>
-    /// <param name="rpm">The applied RPM target.</param>
-    public FrameworkSetFanRpmResponse(int fanIndex, uint rpm)
+    /// <param name="appliedSpeed">The applied fan speed target.</param>
+    public FrameworkSetFanRpmResponse(int fanIndex, RotationalSpeed appliedSpeed)
     {
         FanIndex = fanIndex;
-        Rpm = rpm;
+        AppliedSpeed = appliedSpeed;
     }
 
     /// <summary>
@@ -22,7 +24,7 @@ public sealed record FrameworkSetFanRpmResponse
     public int FanIndex { get; init; }
 
     /// <summary>
-    /// Gets the applied RPM target.
+    /// Gets the applied fan speed target.
     /// </summary>
-    public uint Rpm { get; init; }
+    public RotationalSpeed AppliedSpeed { get; init; }
 }

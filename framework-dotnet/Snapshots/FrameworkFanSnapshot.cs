@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FrameworkDotnet.Enums;
 
-using FrameworkDotnet.Enums;
+using UnitsNet;
 
 namespace FrameworkDotnet.Snapshots;
 
@@ -15,26 +13,20 @@ public sealed class FrameworkFanSnapshot
     /// Initializes a new instance of the <see cref="FrameworkFanSnapshot"/> class.
     /// </summary>
     /// <param name="fanState">The fan reading state.</param>
-    /// <param name="rpm">The fan speed in revolutions per minute.</param>
-    public FrameworkFanSnapshot(FrameworkFanState fanState, ushort rpm)
+    /// <param name="speed">The fan speed.</param>
+    public FrameworkFanSnapshot(FrameworkFanState fanState, RotationalSpeed speed)
     {
         FanState = fanState;
-        Rpm = rpm;
+        Speed = speed;
     }
 
     /// <summary>
     /// Gets the fan reading state.
     /// </summary>
-    public FrameworkFanState FanState
-    {
-        get; init;
-    }
+    public FrameworkFanState FanState { get; init; }
 
     /// <summary>
-    /// Gets the fan speed in revolutions per minute.
+    /// Gets the fan speed.
     /// </summary>
-    public ushort Rpm
-    {
-        get; init;
-    }
+    public RotationalSpeed Speed { get; init; }
 }

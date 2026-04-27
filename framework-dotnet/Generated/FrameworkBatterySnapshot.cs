@@ -3,6 +3,8 @@ using System;
 using FrameworkDotnet.Exceptions;
 using FrameworkDotnet.Snapshots;
 
+using UnitsNet;
+
 using ManagedBatterySnapshot = FrameworkDotnet.Snapshots.FrameworkBatterySnapshot;
 
 namespace Framework.System.Interop;
@@ -27,7 +29,20 @@ internal unsafe partial struct FrameworkBatterySnapshot
 
     internal readonly ManagedBatterySnapshot ToManagedSnapshot()
     {
-        return new ManagedBatterySnapshot(GetManufacturer(), GetModelNumber(), GetSerialNumber(), GetBatteryType(), (FrameworkDotnet.Enums.FrameworkBatteryState)(int)battery_state);
+        return new ManagedBatterySnapshot(
+            GetManufacturer(),
+            GetModelNumber(),
+            GetSerialNumber(),
+            GetBatteryType(),
+            ElectricPotential.FromMillivolts(present_voltage),
+            ElectricCurrent.FromMilliamperes(present_rate),
+            ElectricCharge.FromMilliampereHours(remaining_capacity),
+            ElectricCharge.FromMilliampereHours(design_capacity),
+            ElectricPotential.FromMillivolts(design_voltage),
+            ElectricCharge.FromMilliampereHours(last_full_charge_capacity),
+            cycle_count,
+            Ratio.FromPercent(charge_percentage),
+            (FrameworkDotnet.Enums.FrameworkBatteryState)(int)battery_state);
     }
     internal readonly string GetManufacturer()
     {

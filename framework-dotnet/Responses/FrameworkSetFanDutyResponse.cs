@@ -1,3 +1,5 @@
+using UnitsNet;
+
 namespace FrameworkDotnet.Responses;
 
 /// <summary>
@@ -9,11 +11,11 @@ public sealed record FrameworkSetFanDutyResponse
     /// Initializes a new instance of the <see cref="FrameworkSetFanDutyResponse"/> class.
     /// </summary>
     /// <param name="fanIndex">The zero-based fan index.</param>
-    /// <param name="percent">The applied duty cycle percentage.</param>
-    public FrameworkSetFanDutyResponse(int fanIndex, uint percent)
+    /// <param name="appliedDutyCycle">The applied duty cycle.</param>
+    public FrameworkSetFanDutyResponse(int fanIndex, Ratio appliedDutyCycle)
     {
         FanIndex = fanIndex;
-        Percent = percent;
+        AppliedDutyCycle = appliedDutyCycle;
     }
 
     /// <summary>
@@ -22,7 +24,7 @@ public sealed record FrameworkSetFanDutyResponse
     public int FanIndex { get; init; }
 
     /// <summary>
-    /// Gets the applied duty cycle percentage.
+    /// Gets the applied duty cycle.
     /// </summary>
-    public uint Percent { get; init; }
+    public Ratio AppliedDutyCycle { get; init; }
 }

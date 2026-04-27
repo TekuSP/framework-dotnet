@@ -5,6 +5,8 @@ using FrameworkDotnet.Exceptions;
 using FrameworkDotnet.Responses;
 using FrameworkDotnet.Snapshots;
 
+using UnitsNet;
+
 namespace FrameworkDotnet.Interfaces;
 
 /// <summary>
@@ -89,7 +91,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// Sets the fan speed target in RPM.
     /// </summary>
     /// <param name="fanIndex">The zero-based fan index.</param>
-    /// <param name="rpm">The target RPM.</param>
+    /// <param name="targetSpeed">The target fan speed.</param>
     /// <returns>The response returned for the fan speed change.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
     /// <exception cref="FrameworkDotnet.Exceptions.InvalidArgument.FrameworkInvalidFanIndexException">Thrown when <paramref name="fanIndex"/> is not valid for the current device.</exception>
@@ -97,13 +99,13 @@ public interface IFrameworkEcConnection : IDisposable
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
-    FrameworkSetFanRpmResponse SetFanRpm(int fanIndex, uint rpm);
+    FrameworkSetFanRpmResponse SetFanRpm(int fanIndex, RotationalSpeed targetSpeed);
 
     /// <summary>
     /// Sets the fan duty cycle.
     /// </summary>
     /// <param name="fanIndex">The zero-based fan index.</param>
-    /// <param name="percent">The duty cycle percentage.</param>
+    /// <param name="dutyCycle">The duty cycle.</param>
     /// <returns>The response returned for the fan duty change.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
     /// <exception cref="FrameworkDotnet.Exceptions.InvalidArgument.FrameworkInvalidFanIndexException">Thrown when <paramref name="fanIndex"/> is not valid for the current device.</exception>
@@ -111,7 +113,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
-    FrameworkSetFanDutyResponse SetFanDuty(int fanIndex, uint percent);
+    FrameworkSetFanDutyResponse SetFanDuty(int fanIndex, Ratio dutyCycle);
 
     /// <summary>
     /// Restores automatic fan control for the specified fan.

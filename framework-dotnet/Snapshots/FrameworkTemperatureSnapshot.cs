@@ -1,5 +1,7 @@
 using FrameworkDotnet.Enums;
 
+using UnitsNet;
+
 namespace FrameworkDotnet.Snapshots;
 
 /// <summary>
@@ -11,11 +13,11 @@ public sealed record FrameworkTemperatureSnapshot
     /// Initializes a new instance of the <see cref="FrameworkTemperatureSnapshot"/> class.
     /// </summary>
     /// <param name="state">The reading state.</param>
-    /// <param name="celsius">The temperature in degrees Celsius.</param>
-    public FrameworkTemperatureSnapshot(FrameworkTemperatureState state, short celsius)
+    /// <param name="temperature">The temperature reading.</param>
+    public FrameworkTemperatureSnapshot(FrameworkTemperatureState state, Temperature temperature)
     {
         State = state;
-        Celsius = celsius;
+        Temperature = temperature;
     }
 
     /// <summary>
@@ -24,7 +26,7 @@ public sealed record FrameworkTemperatureSnapshot
     public FrameworkTemperatureState State { get; init; }
 
     /// <summary>
-    /// Gets the temperature in degrees Celsius.
+    /// Gets the temperature reading.
     /// </summary>
-    public short Celsius { get; init; }
+    public Temperature Temperature { get; init; }
 }

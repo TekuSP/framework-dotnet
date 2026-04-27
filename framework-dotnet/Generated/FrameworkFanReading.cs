@@ -1,6 +1,8 @@
 using FrameworkDotnet.Exceptions;
 using FrameworkDotnet.Snapshots;
 
+using UnitsNet;
+
 namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkFanReading
@@ -14,6 +16,6 @@ internal unsafe partial struct FrameworkFanReading
 
     internal readonly FrameworkFanSnapshot ToManagedSnapshot()
     {
-        return new FrameworkFanSnapshot((FrameworkDotnet.Enums.FrameworkFanState)(int)state, rpm);
+        return new FrameworkFanSnapshot((FrameworkDotnet.Enums.FrameworkFanState)(int)state, RotationalSpeed.FromRevolutionsPerMinute(rpm));
     }
 }
