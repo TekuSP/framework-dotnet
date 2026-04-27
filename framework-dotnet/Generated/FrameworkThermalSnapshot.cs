@@ -1,4 +1,4 @@
-using ManagedThermalSnapshot = FrameworkDotnet.Snapshots.FrameworkThermalSnapshot;
+﻿using ManagedThermalSnapshot = FrameworkDotnet.Snapshots.FrameworkThermalSnapshot;
 
 namespace Framework.System.Interop;
 
@@ -22,21 +22,21 @@ internal unsafe partial struct FrameworkThermalSnapshot
     {
         byte sensor_count = 0;
 
-        if (temperature_0.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        if (temperature_0.state != FrameworkTemperatureState.Ok) return sensor_count;
         sensor_count++;
-        if (temperature_1.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        if (temperature_1.state != FrameworkTemperatureState.Ok) return sensor_count;
         sensor_count++;
-        if (temperature_2.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        if (temperature_2.state != FrameworkTemperatureState.Ok) return sensor_count;
         sensor_count++;
-        if (temperature_3.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        if (temperature_3.state != FrameworkTemperatureState.Ok) return sensor_count;
         sensor_count++;
-        if (temperature_4.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        if (temperature_4.state != FrameworkTemperatureState.Ok) return sensor_count;
         sensor_count++;
-        if (temperature_5.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        if (temperature_5.state != FrameworkTemperatureState.Ok) return sensor_count;
         sensor_count++;
-        if (temperature_6.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        if (temperature_6.state != FrameworkTemperatureState.Ok) return sensor_count;
         sensor_count++;
-        if (temperature_7.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        if (temperature_7.state != FrameworkTemperatureState.Ok) return sensor_count;
         sensor_count++;
 
         return sensor_count;
