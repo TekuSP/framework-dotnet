@@ -8,9 +8,12 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <PackageId>FrameworkDotnet</PackageId>
     <Title>FrameworkDotnet</Title>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Richard "TekuSP" Torhan</Authors>
     <Description>Managed .NET bindings for Framework embedded controller, platform, power, fan, and thermal APIs backed by the framework-system Rust native layer.</Description>
     <PackageTags>Framework;EmbeddedController;Hardware;Interop;Telemetry;FanControl;Power;Thermal</PackageTags>
@@ -21,10 +24,16 @@
     <RepositoryType>git</RepositoryType>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <SkipRustBuild Condition="'$(SkipRustBuild)' == ''">false</SkipRustBuild>
     <RustProjectDir>$(MSBuildProjectDirectory)\..\framework-system\</RustProjectDir>
     <RustBindingsFile>$(RustProjectDir)\framework_dotnet_ffi\csharp\NativeMethods.g.cs</RustBindingsFile>
     <RustNativeOutputDir>$(RustProjectDir)\target\release</RustNativeOutputDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <RustNativeLibraryName Condition="'$(OS)' == 'Windows_NT'">framework_dotnet_ffi.dll</RustNativeLibraryName>
     <RustNativeLibraryName Condition="'$(OS)' != 'Windows_NT'">libframework_dotnet_ffi.so</RustNativeLibraryName>
     <FrameworkDotnetWindowsNativeLibraryPath Condition="'$(FrameworkDotnetWindowsNativeLibraryPath)' == ''">$(RustProjectDir)\target\release\framework_dotnet_ffi.dll</FrameworkDotnetWindowsNativeLibraryPath>
@@ -32,6 +41,13 @@
     <FrameworkDotnetLinuxNativeLibraryPath Condition="'$(FrameworkDotnetLinuxNativeLibraryPath)' == ''">$(RustProjectDir)\target\x86_64-unknown-linux-gnu\release\libframework_dotnet_ffi.so</FrameworkDotnetLinuxNativeLibraryPath>
     <FrameworkDotnetLinuxArm64NativeLibraryPath Condition="'$(FrameworkDotnetLinuxArm64NativeLibraryPath)' == ''">$(RustProjectDir)\target\aarch64-unknown-linux-gnu\release\libframework_dotnet_ffi.so</FrameworkDotnetLinuxArm64NativeLibraryPath>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.203" PrivateAssets="All" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="csbindgen" Version="1.9.7">

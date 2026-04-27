@@ -17,7 +17,7 @@ permissions:
 
 env:
   DOTNET_VERSION: '10.0.x'
-  VERSION_PREFIX: '0.1'
+  VERSION_PREFIX: '0.2'
   ARTIFACT_OUTPUT: '${{ github.workspace }}/artifacts'
 
 jobs:
@@ -151,6 +151,7 @@ jobs:
         -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
         -p:SkipRustBuild=true
         -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}\artifacts\win-x64\framework_dotnet_ffi.dll
         -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}\artifacts\win-arm64\framework_dotnet_ffi.dll
@@ -169,6 +170,7 @@ jobs:
         -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
         -p:SkipRustBuild=true
         -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}\artifacts\win-x64\framework_dotnet_ffi.dll
         -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}\artifacts\win-arm64\framework_dotnet_ffi.dll
