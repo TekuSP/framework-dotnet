@@ -1,4 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace FrameworkDotnet.Snapshots;
@@ -134,4 +135,9 @@ public sealed record FrameworkThermalSnapshot
     /// </summary>
     /// <seealso cref="FanCount"/>
     public IEnumerable<FrameworkFanSnapshot> ReportedFans => Fans.Take(FanCount);
+
+    public override string ToString()
+    {
+        return $"Thermal Snapshot: Sensor Count: {SensorCount.ToString(CultureInfo.InvariantCulture)}, Fan Count: {FanCount.ToString(CultureInfo.InvariantCulture)}, Temperatures: {string.Join(", ", ReportedTemperatures)}, Fans: {string.Join(", ", ReportedFans)}";
+    }
 }

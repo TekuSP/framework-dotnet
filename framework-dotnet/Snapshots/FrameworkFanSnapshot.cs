@@ -1,5 +1,7 @@
 ﻿using FrameworkDotnet.Enums;
 
+using System.Globalization;
+
 using UnitsNet;
 
 namespace FrameworkDotnet.Snapshots;
@@ -29,4 +31,9 @@ public sealed class FrameworkFanSnapshot
     /// Gets the fan speed.
     /// </summary>
     public RotationalSpeed Speed { get; init; }
+
+    public override string ToString()
+    {
+        return $"Fan Snapshot: Fan State: {FanState}, Speed: {Speed.ToString(CultureInfo.InvariantCulture)}";
+    }
 }

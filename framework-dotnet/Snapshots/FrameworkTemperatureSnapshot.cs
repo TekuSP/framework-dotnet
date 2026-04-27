@@ -1,4 +1,6 @@
-using FrameworkDotnet.Enums;
+﻿using FrameworkDotnet.Enums;
+
+using System.Globalization;
 
 using UnitsNet;
 
@@ -29,4 +31,9 @@ public sealed record FrameworkTemperatureSnapshot
     /// Gets the temperature reading.
     /// </summary>
     public Temperature Temperature { get; init; }
+
+    public override string ToString()
+    {
+        return $"Temperature Snapshot: State: {State}, Temperature: {Temperature.ToString(CultureInfo.InvariantCulture)}";
+    }
 }

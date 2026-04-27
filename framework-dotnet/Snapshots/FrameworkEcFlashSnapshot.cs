@@ -1,4 +1,4 @@
-using FrameworkDotnet.Enums;
+﻿using FrameworkDotnet.Enums;
 
 namespace FrameworkDotnet.Snapshots;
 
@@ -34,4 +34,9 @@ public sealed record FrameworkEcFlashSnapshot
     /// Gets the read-write firmware version.
     /// </summary>
     public string RwVersion { get; init; }
+
+    public override string ToString()
+    {
+        return $"EC Flash Snapshot: Current Image: {CurrentImage}, RO Version: {RoVersion}, RW Version: {RwVersion}";
+    }
 }

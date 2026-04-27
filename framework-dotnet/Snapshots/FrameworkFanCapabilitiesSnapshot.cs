@@ -1,4 +1,6 @@
-using FrameworkDotnet.Enums;
+﻿using FrameworkDotnet.Enums;
+
+using System.Globalization;
 
 namespace FrameworkDotnet.Snapshots;
 
@@ -27,4 +29,9 @@ public sealed record FrameworkFanCapabilitiesSnapshot
     /// Gets the supported fan features.
     /// </summary>
     public FrameworkFanFeaturesState Features { get; init; }
+
+    public override string ToString()
+    {
+        return $"Fan Capabilities Snapshot: Fan Count: {FanCount.ToString(CultureInfo.InvariantCulture)}, Features: {Features}";
+    }
 }

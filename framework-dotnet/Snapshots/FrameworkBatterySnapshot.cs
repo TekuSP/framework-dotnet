@@ -1,4 +1,6 @@
-using FrameworkDotnet.Enums;
+﻿using FrameworkDotnet.Enums;
+
+using System.Globalization;
 
 using UnitsNet;
 
@@ -119,4 +121,9 @@ public sealed record FrameworkBatterySnapshot
     /// Gets the battery state.
     /// </summary>
     public FrameworkBatteryState BatteryState { get; init; }
+
+    public override string ToString()
+    {
+        return $"Battery: {Manufacturer} {ModelNumber} (SN: {SerialNumber}), Type: {BatteryType}, Voltage: {PresentVoltage.ToString(CultureInfo.InvariantCulture)}, Rate: {PresentRate.ToString(CultureInfo.InvariantCulture)}, Remaining Capacity: {RemainingCapacity.ToString(CultureInfo.InvariantCulture)}, Design Capacity: {DesignCapacity.ToString(CultureInfo.InvariantCulture)}, Design Voltage: {DesignVoltage.ToString(CultureInfo.InvariantCulture)}, Last Full Charge Capacity: {LastFullChargeCapacity.ToString(CultureInfo.InvariantCulture)}, Cycle Count: {CycleCount.ToString(CultureInfo.InvariantCulture)}, Charge Level: {ChargeLevel.ToString(CultureInfo.InvariantCulture)}, State: {BatteryState}";
+    }
 }

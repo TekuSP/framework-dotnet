@@ -12,14 +12,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.55.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\framework-dotnet\framework-dotnet.csproj" />
   </ItemGroup>
 
   <Target Name="CopyFrameworkDotnetNativeLibrary" AfterTargets="Build">
-    <Copy SourceFiles="..\framework-dotnet\bin\$(Configuration)\$(TargetFramework)\$(FrameworkDotnetNativeLibraryName)"
-          DestinationFolder="$(OutDir)"
-          SkipUnchangedFiles="true"
-          Condition="Exists('..\framework-dotnet\bin\$(Configuration)\$(TargetFramework)\$(FrameworkDotnetNativeLibraryName)')" />
+    <Copy SourceFiles="..\framework-dotnet\bin\$(Configuration)\$(TargetFramework)\$(FrameworkDotnetNativeLibraryName)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" Condition="Exists('..\framework-dotnet\bin\$(Configuration)\$(TargetFramework)\$(FrameworkDotnetNativeLibraryName)')" />
   </Target>
 
 </Project>

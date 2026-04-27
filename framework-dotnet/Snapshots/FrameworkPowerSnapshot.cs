@@ -1,7 +1,8 @@
-using System.Collections.Generic;
-using System.Linq;
+﻿using FrameworkDotnet.Enums;
 
-using FrameworkDotnet.Enums;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace FrameworkDotnet.Snapshots;
 
@@ -48,4 +49,9 @@ public sealed record FrameworkPowerSnapshot
     /// </summary>
     /// <seealso cref="BatteryCount"/>
     public IEnumerable<FrameworkBatterySnapshot> ReportedBatteries => Batteries.Take(BatteryCount);
+
+    public override string ToString()
+    {
+        return $"Power Snapshot: Power Source State: {PowerSourceState}, Battery Count: {BatteryCount.ToString(CultureInfo.InvariantCulture)}, Batteries: {string.Join(", ", ReportedBatteries)}";
+    }
 }
