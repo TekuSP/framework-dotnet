@@ -40,6 +40,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// <returns>The EC flash snapshot.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
     /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the native layer reports an EC current image value that is not recognized by the managed API.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -52,6 +53,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
     /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="FrameworkBatteryStateException">Thrown when a battery reading within the reported battery count does not report a valid battery state.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the native layer reports a power source or battery state value that is not recognized by the managed API.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -77,6 +79,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="FrameworkTemperatureStateException">Thrown when a temperature reading within the reported sensor count does not report a successful state.</exception>
     /// <exception cref="FrameworkFanStateException">Thrown when a fan reading within the reported fan count does not report a successful state.</exception>
+    /// <remarks>Because the native layer does not currently report a sensor count, the managed API infers <see cref="FrameworkThermalSnapshot.SensorCount"/> from the first contiguous range of present temperature readings.</remarks>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
