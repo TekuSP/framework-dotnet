@@ -149,7 +149,7 @@ jobs:
       shell: pwsh # Explicitly use PowerShell Core (default on windows-latest for 'run')
 
     - name: Restore dependencies
-      run: dotnet restore -p:Version=${{ env.version }} -p:InformationalVersion=${{ env.version }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+      run: dotnet restore -v normal -p:Version=${{ env.version }} -p:InformationalVersion=${{ env.version }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
     - name: Build
       run: >-
