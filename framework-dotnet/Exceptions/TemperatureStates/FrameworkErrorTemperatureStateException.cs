@@ -1,7 +1,5 @@
 using Framework.System.Interop;
 
-using FrameworkDotnet.Enums;
-
 namespace FrameworkDotnet.Exceptions.TemperatureStates;
 
 /// <summary>

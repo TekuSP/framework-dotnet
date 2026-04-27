@@ -1,3 +1,5 @@
+using FrameworkDotnet.Enums;
+
 namespace FrameworkDotnet.Snapshots;
 
 /// <summary>
@@ -9,13 +11,11 @@ public sealed record FrameworkFanCapabilitiesSnapshot
     /// Initializes a new instance of the <see cref="FrameworkFanCapabilitiesSnapshot"/> class.
     /// </summary>
     /// <param name="fanCount">The number of fans reported by the device.</param>
-    /// <param name="supportsFanControl">A value indicating whether manual fan control is supported.</param>
-    /// <param name="supportsThermalReporting">A value indicating whether thermal reporting is supported.</param>
-    public FrameworkFanCapabilitiesSnapshot(byte fanCount, bool supportsFanControl, bool supportsThermalReporting)
+    /// <param name="features">The supported fan features.</param>
+    public FrameworkFanCapabilitiesSnapshot(byte fanCount, FrameworkFanFeaturesState features)
     {
         FanCount = fanCount;
-        SupportsFanControl = supportsFanControl;
-        SupportsThermalReporting = supportsThermalReporting;
+        Features = features;
     }
 
     /// <summary>
@@ -24,12 +24,17 @@ public sealed record FrameworkFanCapabilitiesSnapshot
     public byte FanCount { get; init; }
 
     /// <summary>
+    /// Gets the supported fan features.
+    /// </summary>
+    public FrameworkFanFeaturesState Features { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether manual fan control is supported.
     /// </summary>
-    public bool SupportsFanControl { get; init; }
+    public bool SupportsFanControl => Features.HasFlag(FrameworkFanFeaturesState.FanControl);
 
     /// <summary>
     /// Gets a value indicating whether thermal reporting is supported.
     /// </summary>
-    public bool SupportsThermalReporting { get; init; }
+    public bool SupportsThermalReporting => Features.HasFlag(FrameworkFanFeaturesState.ThermalReporting);
 }

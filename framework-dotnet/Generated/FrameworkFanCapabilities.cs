@@ -1,14 +1,21 @@
-using ManagedFanCapabilitiesSnapshot = FrameworkDotnet.Snapshots.FrameworkFanCapabilitiesSnapshot;
+using System.Runtime.Intrinsics.Arm;
+
+using FrameworkDotnet.Exceptions;
+using FrameworkDotnet.Snapshots;
 
 namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkFanCapabilities
 {
-    internal readonly ManagedFanCapabilitiesSnapshot ToManagedSnapshot()
+    internal FrameworkFanCapabilities GetValueOrThrow()
     {
-        return new ManagedFanCapabilitiesSnapshot(
-            fan_count,
-            supports_fan_control != 0,
-            supports_thermal_reporting != 0);
+        if (features == FrameworkFanFeaturesState.All)
+            return this;    
+        throw FrameworkFanFeaturesStateException.GetCorrectException(features);
+    }
+
+    internal FrameworkFanCapabilitiesSnapshot ToManagedSnapshot()
+    {
+        return new FrameworkFanCapabilitiesSnapshot(fan_count, (FrameworkDotnet.Enums.FrameworkFanFeaturesState)(int)features);
     }
 }

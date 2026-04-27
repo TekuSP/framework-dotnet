@@ -1,6 +1,5 @@
 using FrameworkDotnet.Exceptions;
-
-using ManagedTemperatureReading = FrameworkDotnet.Snapshots.FrameworkTemperatureSnapshot;
+using FrameworkDotnet.Snapshots;
 
 namespace Framework.System.Interop;
 
@@ -13,8 +12,8 @@ internal unsafe partial struct FrameworkTemperatureReading
         throw FrameworkTemperatureStateException.GetCorrectException(state);
     }
 
-    internal ManagedTemperatureReading ToManagedSnapshot()
+    internal FrameworkTemperatureSnapshot ToManagedSnapshot()
     {
-        return new ManagedTemperatureReading(celsius);
+        return new FrameworkTemperatureSnapshot((global::FrameworkDotnet.Enums.FrameworkTemperatureState)(int)state, celsius);
     }
 }
