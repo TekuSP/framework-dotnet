@@ -5,7 +5,7 @@ namespace FrameworkDotnet.Exceptions.StatusCodes;
 /// <summary>
 /// Represents a native <see cref="FrameworkStatusCode.NullPointer"/> failure.
 /// </summary>
-internal class FrameworkNullPointerStatusException : FrameworkStatusCodeException
+public class FrameworkNullPointerStatusException : FrameworkStatusCodeException
 {
     internal FrameworkNullPointerStatusException() : base(FrameworkStatusCode.NullPointer)
     {

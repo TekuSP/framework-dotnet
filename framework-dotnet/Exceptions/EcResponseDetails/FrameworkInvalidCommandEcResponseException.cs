@@ -5,7 +5,7 @@ namespace FrameworkDotnet.Exceptions.EcResponseDetails;
 /// <summary>
 /// Represents a native <see cref="FrameworkEcResponseDetail.InvalidCommand"/> EC response failure.
 /// </summary>
-internal class FrameworkInvalidCommandEcResponseException : FrameworkEcResponseException
+public class FrameworkInvalidCommandEcResponseException : FrameworkEcResponseException
 {
     internal FrameworkInvalidCommandEcResponseException() : base(FrameworkEcResponseDetail.InvalidCommand)
     {

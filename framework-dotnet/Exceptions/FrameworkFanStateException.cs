@@ -9,15 +9,20 @@ namespace FrameworkDotnet.Exceptions;
 /// <summary>
 /// Represents an exception mapped directly from a <see cref="FrameworkFanState"/> value.
 /// </summary>
-internal abstract class FrameworkFanStateException : FrameworkException
+public abstract class FrameworkFanStateException : FrameworkException
 {
     internal FrameworkFanStateException(FrameworkFanState fanState)
         : base()
     {
-        FanState = fanState;
+        this.fanState = fanState;
     }
 
-    internal FrameworkFanState FanState { get; }
+    /// <summary>
+    /// Gets the fan state associated with the exception.
+    /// </summary>
+    public string FanState => fanState.ToString();
+
+    private readonly FrameworkFanState fanState;
 
     internal static FrameworkFanStateException GetCorrectException(FrameworkFanState statusCode)
     {

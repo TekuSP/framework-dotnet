@@ -5,7 +5,7 @@ namespace FrameworkDotnet.Exceptions.EcResponseDetails;
 /// <summary>
 /// Represents a native <see cref="FrameworkEcResponseDetail.InvalidChecksum"/> EC response failure.
 /// </summary>
-internal class FrameworkInvalidChecksumEcResponseException : FrameworkEcResponseException
+public class FrameworkInvalidChecksumEcResponseException : FrameworkEcResponseException
 {
     internal FrameworkInvalidChecksumEcResponseException() : base(FrameworkEcResponseDetail.InvalidChecksum)
     {

@@ -8,7 +8,7 @@ internal unsafe partial struct FrameworkProductNameResult
     {
         if (status.IsFailure)
         {
-            throw FrameworkStatusException.GetCorrectException(status.code);
+            throw FrameworkStatusException.GetCorrectException(status);
         }
         return product_name.ToUtf8StringAndFree();
     }

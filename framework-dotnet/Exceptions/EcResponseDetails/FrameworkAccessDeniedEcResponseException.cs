@@ -5,7 +5,7 @@ namespace FrameworkDotnet.Exceptions.EcResponseDetails;
 /// <summary>
 /// Represents a native <see cref="FrameworkEcResponseDetail.AccessDenied"/> EC response failure.
 /// </summary>
-internal class FrameworkAccessDeniedEcResponseException : FrameworkEcResponseException
+public class FrameworkAccessDeniedEcResponseException : FrameworkEcResponseException
 {
     internal FrameworkAccessDeniedEcResponseException() : base(FrameworkEcResponseDetail.AccessDenied)
     {

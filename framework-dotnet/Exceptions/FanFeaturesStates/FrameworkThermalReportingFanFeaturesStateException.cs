@@ -5,7 +5,7 @@ namespace FrameworkDotnet.Exceptions.FanFeaturesStates;
 /// <summary>
 /// Represents a <see cref="FrameworkFanFeaturesState.ThermalReporting"/> fan features state.
 /// </summary>
-internal class FrameworkThermalReportingFanFeaturesStateException : FrameworkFanFeaturesStateException
+public class FrameworkThermalReportingFanFeaturesStateException : FrameworkFanFeaturesStateException
 {
     internal FrameworkThermalReportingFanFeaturesStateException()
         : base(FrameworkFanFeaturesState.ThermalReporting)

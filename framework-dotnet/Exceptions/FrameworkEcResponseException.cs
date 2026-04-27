@@ -12,63 +12,89 @@ namespace FrameworkDotnet.Exceptions;
 /// </summary>
 public class FrameworkEcResponseException : FrameworkStatusCodeException
 {
-    internal FrameworkEcResponseException(FrameworkEcResponseDetail detail) : base(FrameworkStatusCode.EcResponse)
+    internal FrameworkEcResponseException(Framework.System.Interop.FrameworkEcResponseDetail detail) : base(Framework.System.Interop.FrameworkStatusCode.EcResponse)
     {
-        Detail = detail;
+        this.detail = detail;
     }
 
-    internal FrameworkEcResponseDetail Detail
+    internal FrameworkEcResponseException(FrameworkStatusEcResponseRecord ecResponse)
+        : base(Framework.System.Interop.FrameworkStatusCode.EcResponse)
     {
-        get;
+        detail = ecResponse.Response;
+        payloadDescription = ecResponse.Description;
     }
 
-    internal static new FrameworkStatusException GetCorrectException(FrameworkStatusCode statusCode)
+    /// <summary>
+    /// Gets the native EC response detail name associated with the exception.
+    /// </summary>
+    public string Detail => detail.ToString();
+
+    private readonly Framework.System.Interop.FrameworkEcResponseDetail detail;
+    private readonly string? payloadDescription;
+
+    /// <inheritdoc/>
+    public override string? Description => base.Description ?? payloadDescription ?? Detail;
+
+    internal static new FrameworkStatusException GetCorrectException(Framework.System.Interop.FrameworkStatusCode statusCode)
     {
-        return GetCorrectException((FrameworkEcResponseDetail)(int)statusCode);
+        return GetCorrectException((Framework.System.Interop.FrameworkEcResponseDetail)(int)statusCode);
     }
 
-    internal static FrameworkStatusException GetCorrectException(FrameworkEcResponseDetail statusCode)
+    internal static FrameworkStatusException GetCorrectException(FrameworkStatusEcResponseRecord ecResponse)
     {
-        switch (statusCode)
+        return GetCorrectException(ecResponse.Response, ecResponse);
+    }
+
+    internal new static FrameworkStatusException GetCorrectException(FrameworkStatus status)
+    {
+        var exception = GetCorrectException(status.payload.ec_response);
+
+        try
         {
-            case FrameworkEcResponseDetail.Unknown:
-                return new FrameworkUnknownEcResponseException();
-            case FrameworkEcResponseDetail.Success:
-                throw new ArgumentException("Status code indicates success, no exception should be thrown.", nameof(statusCode));
-            case FrameworkEcResponseDetail.InvalidCommand:
-                return new FrameworkInvalidCommandEcResponseException();
-            case FrameworkEcResponseDetail.Error:
-                return new FrameworkErrorEcResponseException();
-            case FrameworkEcResponseDetail.InvalidParameter:
-                return new FrameworkInvalidParameterEcResponseException();
-            case FrameworkEcResponseDetail.AccessDenied:
-                return new FrameworkAccessDeniedEcResponseException();
-            case FrameworkEcResponseDetail.InvalidResponse:
-                return new FrameworkInvalidResponseEcResponseException();
-            case FrameworkEcResponseDetail.InvalidVersion:
-                return new FrameworkInvalidVersionEcResponseException();
-            case FrameworkEcResponseDetail.InvalidChecksum:
-                return new FrameworkInvalidChecksumEcResponseException();
-            case FrameworkEcResponseDetail.InProgress:
-                return new FrameworkInProgressEcResponseException();
-            case FrameworkEcResponseDetail.Unavailable:
-                return new FrameworkUnavailableEcResponseException();
-            case FrameworkEcResponseDetail.Timeout:
-                return new FrameworkTimeoutEcResponseException();
-            case FrameworkEcResponseDetail.Overflow:
-                return new FrameworkOverflowEcResponseException();
-            case FrameworkEcResponseDetail.InvalidHeader:
-                return new FrameworkInvalidHeaderEcResponseException();
-            case FrameworkEcResponseDetail.RequestTruncated:
-                return new FrameworkRequestTruncatedEcResponseException();
-            case FrameworkEcResponseDetail.ResponseTooBig:
-                return new FrameworkResponseTooBigEcResponseException();
-            case FrameworkEcResponseDetail.BusError:
-                return new FrameworkBusErrorEcResponseException();
-            case FrameworkEcResponseDetail.Busy:
-                return new FrameworkBusyEcResponseException();
-            default:
-                throw new ArgumentOutOfRangeException(nameof(statusCode), statusCode, "Unhandled status code.");
+            exception.SetNativeDescription(NativeMethods.GetStatusDescriptionOrEmpty(status));
         }
+        catch
+        {
+        }
+
+        return exception;
+    }
+
+    internal static FrameworkStatusException GetCorrectException(Framework.System.Interop.FrameworkEcResponseDetail statusCode)
+    {
+        return GetCorrectException(statusCode, null);
+    }
+
+    private static FrameworkStatusException GetCorrectException(Framework.System.Interop.FrameworkEcResponseDetail statusCode, FrameworkStatusEcResponseRecord? ecResponse)
+    {
+        FrameworkStatusException exception = statusCode switch
+        {
+            Framework.System.Interop.FrameworkEcResponseDetail.Unknown => new FrameworkUnknownEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.Success => throw new ArgumentException("Status code indicates success, no exception should be thrown.", nameof(statusCode)),
+            Framework.System.Interop.FrameworkEcResponseDetail.InvalidCommand => new FrameworkInvalidCommandEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.Error => new FrameworkErrorEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.InvalidParameter => new FrameworkInvalidParameterEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.AccessDenied => new FrameworkAccessDeniedEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.InvalidResponse => new FrameworkInvalidResponseEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.InvalidVersion => new FrameworkInvalidVersionEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.InvalidChecksum => new FrameworkInvalidChecksumEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.InProgress => new FrameworkInProgressEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.Unavailable => new FrameworkUnavailableEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.Timeout => new FrameworkTimeoutEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.Overflow => new FrameworkOverflowEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.InvalidHeader => new FrameworkInvalidHeaderEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.RequestTruncated => new FrameworkRequestTruncatedEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.ResponseTooBig => new FrameworkResponseTooBigEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.BusError => new FrameworkBusErrorEcResponseException(),
+            Framework.System.Interop.FrameworkEcResponseDetail.Busy => new FrameworkBusyEcResponseException(),
+            _ => throw new ArgumentOutOfRangeException(nameof(statusCode), statusCode, "Unhandled status code.")
+        };
+
+        if (ecResponse.HasValue)
+        {
+            exception.SetNativeDescription(ecResponse.Value.Description);
+        }
+
+        return exception;
     }
 }

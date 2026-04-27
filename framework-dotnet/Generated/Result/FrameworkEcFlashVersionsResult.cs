@@ -8,7 +8,7 @@ internal unsafe partial struct FrameworkEcFlashVersionsResult
     {
         if (status.IsFailure)
         {
-            throw FrameworkEcResponseException.GetCorrectException(status.code);
+            throw FrameworkEcResponseException.GetCorrectException(status);
         }
         return versions;
     }

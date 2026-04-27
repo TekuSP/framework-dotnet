@@ -8,7 +8,7 @@ internal unsafe partial struct FrameworkPlatformFamilyResult
     {
         if (status.IsFailure)
         {
-            throw FrameworkStatusException.GetCorrectException(status.code);
+            throw FrameworkStatusException.GetCorrectException(status);
         }
         return family;
     }

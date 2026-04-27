@@ -8,7 +8,7 @@ internal unsafe partial struct FrameworkEcBuildInfoResult
     {
         if (status.IsFailure)
         {
-            throw FrameworkEcResponseException.GetCorrectException(status.code);
+            throw FrameworkEcResponseException.GetCorrectException(status);
         }
         return build_info.ToUtf8StringAndFree();
     }

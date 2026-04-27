@@ -10,4 +10,9 @@ public abstract class FrameworkStatusCodeException : FrameworkStatusException
     internal FrameworkStatusCodeException(FrameworkStatusCode statusCode) : base(statusCode)
     {
     }
+
+    internal FrameworkStatusCodeException(FrameworkStatus status)
+        : base(status.code)
+    {
+    }
 }

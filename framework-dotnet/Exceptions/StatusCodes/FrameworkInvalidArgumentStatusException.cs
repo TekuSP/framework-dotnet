@@ -10,4 +10,17 @@ public class FrameworkInvalidArgumentStatusException : FrameworkStatusCodeExcept
     internal FrameworkInvalidArgumentStatusException() : base(FrameworkStatusCode.InvalidArgument)
     {
     }
+
+    internal FrameworkInvalidArgumentStatusException(FrameworkStatus status)
+        : base(status)
+    {
+        payloadDescription = status.payload.GetPayloadDescription(status.code);
+    }
+
+    /// <summary>
+    /// Gets a human-readable description of the invalid argument failure, when available.
+    /// </summary>
+    public override string? Description => base.Description ?? payloadDescription;
+
+    private readonly string? payloadDescription;
 }

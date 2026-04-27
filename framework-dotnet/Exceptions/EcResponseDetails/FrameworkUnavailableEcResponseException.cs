@@ -5,7 +5,7 @@ namespace FrameworkDotnet.Exceptions.EcResponseDetails;
 /// <summary>
 /// Represents a native <see cref="FrameworkEcResponseDetail.Unavailable"/> EC response failure.
 /// </summary>
-internal class FrameworkUnavailableEcResponseException : FrameworkEcResponseException
+public class FrameworkUnavailableEcResponseException : FrameworkEcResponseException
 {
     internal FrameworkUnavailableEcResponseException(): base(FrameworkEcResponseDetail.Unavailable)
     {

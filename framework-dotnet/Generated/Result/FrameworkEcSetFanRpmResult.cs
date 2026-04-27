@@ -10,7 +10,7 @@ internal unsafe partial struct FrameworkEcSetFanRpmResult
     {
         if (status.IsFailure)
         {
-            throw FrameworkInvalidFanIndexException.GetCorrectException(status.code);
+            throw FrameworkInvalidFanIndexException.GetCorrectException(status);
         }
         return this;
     }

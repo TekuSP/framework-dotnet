@@ -9,14 +9,19 @@ namespace FrameworkDotnet.Exceptions;
 /// <summary>
 /// Represents an exception mapped directly from a <see cref="FrameworkTemperatureState"/> value.
 /// </summary>
-internal abstract class FrameworkTemperatureStateException : FrameworkException
+public abstract class FrameworkTemperatureStateException : FrameworkException
 {
     internal FrameworkTemperatureStateException(FrameworkTemperatureState temperatureState) : base()
     {
-        TemperatureState = temperatureState;
+        this.temperatureState = temperatureState;
     }
 
-    internal FrameworkTemperatureState TemperatureState { get; }
+    /// <summary>
+    /// Gets the temperature state associated with the exception.
+    /// </summary>
+    public string TemperatureState => temperatureState.ToString();
+
+    private readonly FrameworkTemperatureState temperatureState;
 
     internal static FrameworkTemperatureStateException GetCorrectException(FrameworkTemperatureState statusCode)
     {

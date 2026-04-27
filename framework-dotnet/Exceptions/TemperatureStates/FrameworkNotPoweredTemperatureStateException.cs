@@ -5,7 +5,7 @@ namespace FrameworkDotnet.Exceptions.TemperatureStates;
 /// <summary>
 /// Represents a <see cref="FrameworkTemperatureState.NotPowered"/> temperature state.
 /// </summary>
-internal class FrameworkNotPoweredTemperatureStateException : FrameworkTemperatureStateException
+public class FrameworkNotPoweredTemperatureStateException : FrameworkTemperatureStateException
 {
     internal FrameworkNotPoweredTemperatureStateException() : base(FrameworkTemperatureState.NotPowered)
     {
