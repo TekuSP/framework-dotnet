@@ -7,7 +7,7 @@ namespace FrameworkDotnet.Interfaces;
 /// <summary>
 /// Defines Framework system discovery and embedded controller access operations.
 /// </summary>
-public interface IFrameworkSystem
+public interface IFrameworkSystem : IFrameworkEcConnectionFactory
 {
     /// <summary>
     /// Gets a cached value indicating whether the current device appears to be a Framework device.
@@ -67,26 +67,4 @@ public interface IFrameworkSystem
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
     bool IsDriverSupported(FrameworkEcDriver driver);
 
-    /// <summary>
-    /// Opens the default embedded controller connection.
-    /// </summary>
-    /// <returns>An open EC connection.</returns>
-    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
-    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
-    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
-    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the native library reports success but returns a null handle.</exception>
-    IFrameworkEcConnection OpenDefaultEc();
-
-    /// <summary>
-    /// Opens an embedded controller connection using the specified driver.
-    /// </summary>
-    /// <param name="driver">The driver to use.</param>
-    /// <returns>An open EC connection.</returns>
-    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
-    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
-    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
-    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the native library reports success but returns a null handle.</exception>
-    IFrameworkEcConnection OpenEcWithDriver(FrameworkEcDriver driver);
 }

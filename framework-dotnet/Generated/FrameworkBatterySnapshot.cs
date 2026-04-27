@@ -1,32 +1,31 @@
+using System;
+
 using FrameworkDotnet.Exceptions;
 using FrameworkDotnet.Snapshots;
 
-using ManagedBatterySnapshot = FrameworkDotnet.Snapshots.FrameworkBatterSnapshot;
+using ManagedBatterySnapshot = FrameworkDotnet.Snapshots.FrameworkBatterySnapshot;
 
 namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkBatterySnapshot
 {
-    internal FrameworkBatterySnapshot GetValueOrThrow()
+    internal readonly FrameworkBatterySnapshot GetValueOrThrow()
     {
         switch (battery_state)
         {
             case FrameworkBatteryState.NotPresent:
-                break;
             case FrameworkBatteryState.Critical:
-                break;
             case FrameworkBatteryState.Idle:
             case FrameworkBatteryState.Charging:
             case FrameworkBatteryState.Discharging:
             case FrameworkBatteryState.ChargingAndDischarging:
                 return this;
             default:
-                break;
+                throw new ArgumentOutOfRangeException(nameof(battery_state), battery_state, "Unhandled battery state.");
         }
-        throw FrameworkBatteryStateException.GetCorrectException(battery_state);
     }
 
-    internal ManagedBatterySnapshot ToManagedSnapshot()
+    internal readonly ManagedBatterySnapshot ToManagedSnapshot()
     {
         return new ManagedBatterySnapshot(GetManufacturer(), GetModelNumber(), GetSerialNumber(), GetBatteryType(), (FrameworkDotnet.Enums.FrameworkBatteryState)(int)battery_state);
     }

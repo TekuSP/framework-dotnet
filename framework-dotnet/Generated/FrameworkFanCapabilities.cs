@@ -1,4 +1,4 @@
-using System.Runtime.Intrinsics.Arm;
+using System;
 
 using FrameworkDotnet.Exceptions;
 using FrameworkDotnet.Snapshots;
@@ -7,14 +7,21 @@ namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkFanCapabilities
 {
-    internal FrameworkFanCapabilities GetValueOrThrow()
+    internal readonly FrameworkFanCapabilities GetValueOrThrow()
     {
-        if (features == FrameworkFanFeaturesState.All)
-            return this;    
-        throw FrameworkFanFeaturesStateException.GetCorrectException(features);
+        switch (features)
+        {
+            case FrameworkFanFeaturesState.None:
+            case FrameworkFanFeaturesState.FanControl:
+            case FrameworkFanFeaturesState.ThermalReporting:
+            case FrameworkFanFeaturesState.All:
+                return this;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(features), features, "Unhandled fan features state.");
+        }
     }
 
-    internal FrameworkFanCapabilitiesSnapshot ToManagedSnapshot()
+    internal readonly FrameworkFanCapabilitiesSnapshot ToManagedSnapshot()
     {
         return new FrameworkFanCapabilitiesSnapshot(fan_count, (FrameworkDotnet.Enums.FrameworkFanFeaturesState)(int)features);
     }

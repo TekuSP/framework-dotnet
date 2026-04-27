@@ -23,9 +23,10 @@ public sealed record FrameworkThermalSnapshot
     /// <param name="fan1">The second fan snapshot.</param>
     /// <param name="fan2">The third fan snapshot.</param>
     /// <param name="fan3">The fourth fan snapshot.</param>
-    public FrameworkThermalSnapshot(byte fanCount, FrameworkTemperatureSnapshot temperature0, FrameworkTemperatureSnapshot temperature1, FrameworkTemperatureSnapshot temperature2, FrameworkTemperatureSnapshot temperature3, FrameworkTemperatureSnapshot temperature4, FrameworkTemperatureSnapshot temperature5, FrameworkTemperatureSnapshot temperature6, FrameworkTemperatureSnapshot temperature7, FrameworkFanSnapshot fan0, FrameworkFanSnapshot fan1, FrameworkFanSnapshot fan2, FrameworkFanSnapshot fan3)
+    public FrameworkThermalSnapshot(byte fanCount, byte sensorCount, FrameworkTemperatureSnapshot temperature0, FrameworkTemperatureSnapshot temperature1, FrameworkTemperatureSnapshot temperature2, FrameworkTemperatureSnapshot temperature3, FrameworkTemperatureSnapshot temperature4, FrameworkTemperatureSnapshot temperature5, FrameworkTemperatureSnapshot temperature6, FrameworkTemperatureSnapshot temperature7, FrameworkFanSnapshot fan0, FrameworkFanSnapshot fan1, FrameworkFanSnapshot fan2, FrameworkFanSnapshot fan3)
     {
         FanCount = fanCount;
+        SensorCount = sensorCount;
         Temperature0 = temperature0;
         Temperature1 = temperature1;
         Temperature2 = temperature2;
@@ -38,6 +39,14 @@ public sealed record FrameworkThermalSnapshot
         Fan1 = fan1;
         Fan2 = fan2;
         Fan3 = fan3;
+    }
+
+    /// <summary>
+    /// Gets the number of sensors reported in the snapshot.
+    /// </summary>
+    public byte SensorCount
+    {
+        get; init;
     }
 
     /// <summary>

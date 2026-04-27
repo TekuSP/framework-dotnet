@@ -1,18 +1,49 @@
-using FrameworkDotnet.Exceptions.TemperatureStates;
+using System;
+
+using FrameworkDotnet.Exceptions;
 
 using ManagedPowerSnapshot = FrameworkDotnet.Snapshots.FrameworkPowerSnapshot;
 namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkPowerSnapshot
 {
-    internal FrameworkPowerSnapshot GetValueOrThrow()
+    private static FrameworkDotnet.Snapshots.FrameworkBatterySnapshot ToManagedBatterySnapshot(byte batteryCount, byte batteryIndex, FrameworkBatterySnapshot battery)
     {
-        if (power_source_state == FrameworkPowerSourceState.None)
-            throw new FrameworkNotPoweredTemperatureStateException();
-        return this;
+        if (batteryIndex >= batteryCount)
+        {
+            return battery.ToManagedSnapshot();
+        }
+
+        if (battery.battery_state == FrameworkBatteryState.NotPresent)
+        {
+            throw FrameworkBatteryStateException.GetCorrectException(battery.battery_state);
+        }
+
+        return battery.GetValueOrThrow().ToManagedSnapshot();
     }
-    internal ManagedPowerSnapshot ToManagedSnapshot()
+
+    internal readonly FrameworkPowerSnapshot GetValueOrThrow()
     {
-        return new ManagedPowerSnapshot((FrameworkDotnet.Enums.FrameworkPowerSourceState)(int)power_source_state, battery_count, battery_0.GetValueOrThrow().ToManagedSnapshot());
+        switch (power_source_state)
+        {
+            case FrameworkPowerSourceState.None:
+            case FrameworkPowerSourceState.AcOnly:
+            case FrameworkPowerSourceState.BatteryOnly:
+            case FrameworkPowerSourceState.AcAndBattery:
+                return this;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(power_source_state), power_source_state, "Unhandled power source state.");
+        }
+    }
+
+    /// <summary>
+    /// Converts the current instance to a managed snapshot.
+    /// </summary>
+    internal readonly ManagedPowerSnapshot ToManagedSnapshot()
+    {
+        return new ManagedPowerSnapshot(
+            (FrameworkDotnet.Enums.FrameworkPowerSourceState)(int)power_source_state,
+            battery_count,
+            ToManagedBatterySnapshot(battery_count, 0, battery_0));
     }
 }

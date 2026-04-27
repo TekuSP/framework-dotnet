@@ -8,7 +8,7 @@ internal unsafe partial struct FrameworkEcThermalSnapshotResult
     {
         if (status.IsFailure)
         {
-            throw FrameworkStatusException.GetCorrectException(status.code);
+            throw FrameworkEcResponseException.GetCorrectException(status.code);
         }
         return snapshot;
     }

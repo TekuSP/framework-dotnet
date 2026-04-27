@@ -4,21 +4,60 @@ namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkThermalSnapshot
 {
+    private readonly FrameworkDotnet.Snapshots.FrameworkTemperatureSnapshot ToManagedTemperatureSnapshot(byte sensorCount, byte sensorIndex, FrameworkTemperatureReading reading)
+    {
+        return sensorIndex >= sensorCount
+            ? reading.ToManagedSnapshot()
+            : reading.GetValueOrThrow().ToManagedSnapshot();
+    }
+
+    private readonly FrameworkDotnet.Snapshots.FrameworkFanSnapshot ToManagedFanSnapshot(byte fanCount, byte fanIndex, FrameworkFanReading reading)
+    {
+        return fanIndex >= fanCount
+            ? reading.ToManagedSnapshot()
+            : reading.GetValueOrThrow().ToManagedSnapshot();
+    }
+
+    internal readonly byte CalculateSensorCount()
+    {
+        byte sensor_count = 0;
+
+        if (temperature_0.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        sensor_count++;
+        if (temperature_1.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        sensor_count++;
+        if (temperature_2.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        sensor_count++;
+        if (temperature_3.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        sensor_count++;
+        if (temperature_4.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        sensor_count++;
+        if (temperature_5.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        sensor_count++;
+        if (temperature_6.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        sensor_count++;
+        if (temperature_7.state == FrameworkTemperatureState.NotPresent) return sensor_count;
+        sensor_count++;
+
+        return sensor_count;
+    }
     internal readonly ManagedThermalSnapshot ToManagedSnapshot()
     {
+        var sensor_count = CalculateSensorCount();
         return new ManagedThermalSnapshot(
             fan_count,
-            temperature_0.GetValueOrThrow().ToManagedSnapshot(),
-            temperature_1.GetValueOrThrow().ToManagedSnapshot(),
-            temperature_2.GetValueOrThrow().ToManagedSnapshot(),
-            temperature_3.GetValueOrThrow().ToManagedSnapshot(),
-            temperature_4.GetValueOrThrow().ToManagedSnapshot(),
-            temperature_5.GetValueOrThrow().ToManagedSnapshot(),
-            temperature_6.GetValueOrThrow().ToManagedSnapshot(),
-            temperature_7.GetValueOrThrow().ToManagedSnapshot(),
-            fan_0.GetValueOrThrow().ToManagedSnapshot(),
-            fan_1.GetValueOrThrow().ToManagedSnapshot(),
-            fan_2.GetValueOrThrow().ToManagedSnapshot(),
-            fan_3.GetValueOrThrow().ToManagedSnapshot());
+            sensor_count,
+            ToManagedTemperatureSnapshot(sensor_count, 0, temperature_0),
+            ToManagedTemperatureSnapshot(sensor_count, 1, temperature_1),
+            ToManagedTemperatureSnapshot(sensor_count, 2, temperature_2),
+            ToManagedTemperatureSnapshot(sensor_count, 3, temperature_3),
+            ToManagedTemperatureSnapshot(sensor_count, 4, temperature_4),
+            ToManagedTemperatureSnapshot(sensor_count, 5, temperature_5),
+            ToManagedTemperatureSnapshot(sensor_count, 6, temperature_6),
+            ToManagedTemperatureSnapshot(sensor_count, 7, temperature_7),
+            ToManagedFanSnapshot(fan_count, 0, fan_0),
+            ToManagedFanSnapshot(fan_count, 1, fan_1),
+            ToManagedFanSnapshot(fan_count, 2, fan_2),
+            ToManagedFanSnapshot(fan_count, 3, fan_3));
     }
 }

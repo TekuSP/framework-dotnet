@@ -115,6 +115,10 @@ public sealed class FrameworkEcConnection : SafeHandleZeroOrMinusOneIsInvalid, I
         return Create((IntPtr)Native.NativeMethods.OpenWithDriverOrThrow((Native.FrameworkEcDriver)(int)driver));
     }
 
+    /// <summary>
+    /// Releases the native embedded controller handle associated with this instance.
+    /// </summary>
+    /// <returns><see langword="true"/> when the release path completes.</returns>
     protected override unsafe bool ReleaseHandle()
     {
         Native.NativeMethods.framework_ec_close((Native.FrameworkEcHandle*)handle);

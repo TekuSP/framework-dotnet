@@ -8,7 +8,7 @@ namespace FrameworkDotnet;
 /// <summary>
 /// Provides a safe entry point for interacting with Framework system information and EC services.
 /// </summary>
-public class FrameworkSystem : IFrameworkSystem
+public class FrameworkSystem : IFrameworkSystem, IFrameworkEcConnectionFactory
 {
     /// <inheritdoc/>
     public bool? IsFrameworkDevice

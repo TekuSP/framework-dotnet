@@ -7,17 +7,17 @@ namespace FrameworkDotnet.Snapshots;
 /// <summary>
 /// Represents a battery snapshot returned by the EC.
 /// </summary>
-public sealed record FrameworkBatterSnapshot
+public sealed record FrameworkBatterySnapshot
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="FrameworkBatterSnapshot"/> class.
+    /// Initializes a new instance of the <see cref="FrameworkBatterySnapshot"/> class.
     /// </summary>
     /// <param name="manufacturer">The battery manufacturer.</param>
     /// <param name="model_number">The battery model number.</param>
     /// <param name="serial_number">The battery serial number.</param>
     /// <param name="battery_type">The battery chemistry or type.</param>
     /// <param name="batteryState">The battery state.</param>
-    public FrameworkBatterSnapshot(string manufacturer, string model_number, string serial_number, string battery_type, FrameworkBatteryState batteryState)
+    public FrameworkBatterySnapshot(string manufacturer, string model_number, string serial_number, string battery_type, FrameworkBatteryState batteryState)
     {
         Manufacturer = manufacturer;
         Model_Number = model_number;

@@ -15,7 +15,7 @@ public sealed record FrameworkPowerSnapshot
     /// <param name="power_source_state">The current power source state.</param>
     /// <param name="battery_count">The number of batteries reported by the device.</param>
     /// <param name="battery_0">The first battery snapshot.</param>
-    public FrameworkPowerSnapshot(FrameworkPowerSourceState power_source_state, byte battery_count, FrameworkBatterSnapshot battery_0)
+    public FrameworkPowerSnapshot(FrameworkPowerSourceState power_source_state, byte battery_count, FrameworkBatterySnapshot battery_0)
     {
         PowerSourceState = power_source_state;
         BatteryCount = battery_count;
@@ -41,7 +41,7 @@ public sealed record FrameworkPowerSnapshot
     /// <summary>
     /// Gets the first battery snapshot.
     /// </summary>
-    public FrameworkBatterSnapshot Battery_0
+    public FrameworkBatterySnapshot Battery_0
     {
         get;
     }
@@ -49,5 +49,5 @@ public sealed record FrameworkPowerSnapshot
     /// <summary>
     /// Gets the battery snapshots in index order.
     /// </summary>
-    public IReadOnlyList<FrameworkBatterSnapshot> Batteries => [Battery_0];
+    public IReadOnlyList<FrameworkBatterySnapshot> Batteries => [Battery_0];
 }

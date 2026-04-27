@@ -5,14 +5,14 @@ namespace Framework.System.Interop;
 
 internal unsafe partial struct FrameworkFanReading
 {
-    internal FrameworkFanReading GetValueOrThrow()
+    internal readonly FrameworkFanReading GetValueOrThrow()
     {
         if (state == FrameworkFanState.Ok)
             return this;
         throw FrameworkFanStateException.GetCorrectException(state);
     }
 
-    internal FrameworkFanSnapshot ToManagedSnapshot()
+    internal readonly FrameworkFanSnapshot ToManagedSnapshot()
     {
         return new FrameworkFanSnapshot((FrameworkDotnet.Enums.FrameworkFanState)(int)state, rpm);
     }

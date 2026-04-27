@@ -16,6 +16,9 @@ public class FrameworkInvalidFanIndexException : FrameworkInvalidArgumentStatusE
         FanIndex = fanIndex;
     }
 
+    /// <summary>
+    /// Gets the invalid zero-based fan index reported by the native API.
+    /// </summary>
     public int FanIndex { get; }
 
     internal static FrameworkStatusException GetCorrectException(FrameworkStatus status)
