@@ -17,7 +17,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// </summary>
     /// <returns>The active EC driver.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -28,7 +28,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// </summary>
     /// <returns>The firmware build information string.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -39,7 +39,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// </summary>
     /// <returns>The EC flash snapshot.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -50,7 +50,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// </summary>
     /// <returns>The current power snapshot.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -61,7 +61,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// </summary>
     /// <returns>The fan capabilities snapshot.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -72,7 +72,9 @@ public interface IFrameworkEcConnection : IDisposable
     /// </summary>
     /// <returns>The thermal snapshot.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
+    /// <exception cref="FrameworkTemperatureStateException">Thrown when a temperature reading in the snapshot reports a non-success state.</exception>
+    /// <exception cref="FrameworkFanStateException">Thrown when a fan reading in the snapshot reports a non-success state.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -83,8 +85,10 @@ public interface IFrameworkEcConnection : IDisposable
     /// </summary>
     /// <param name="fanIndex">The zero-based fan index.</param>
     /// <param name="rpm">The target RPM.</param>
+    /// <returns>The response returned for the fan speed change.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkInvalidFanIndexException">Thrown when <paramref name="fanIndex"/> is not valid for the current device.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -95,8 +99,10 @@ public interface IFrameworkEcConnection : IDisposable
     /// </summary>
     /// <param name="fanIndex">The zero-based fan index.</param>
     /// <param name="percent">The duty cycle percentage.</param>
+    /// <returns>The response returned for the fan duty change.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkInvalidFanIndexException">Thrown when <paramref name="fanIndex"/> is not valid for the current device.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -106,8 +112,10 @@ public interface IFrameworkEcConnection : IDisposable
     /// Restores automatic fan control for the specified fan.
     /// </summary>
     /// <param name="fanIndex">The zero-based fan index.</param>
+    /// <returns>The response returned for the automatic fan control restore operation.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkInvalidFanIndexException">Thrown when <paramref name="fanIndex"/> is not valid for the current device.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>

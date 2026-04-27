@@ -29,9 +29,6 @@ internal class Program
             Console.WriteLine($"Flash: {flash.CurrentImage}, RO={flash.RoVersion}, RW={flash.RwVersion}");
 
             var power = ec.GetPowerSnapshot();
-            Console.WriteLine($"Battery: {power.ChargePercentage}%");
-            Console.WriteLine($"AC Present: {power.AcPresent}");
-            Console.WriteLine($"Manufacturer: {power.Manufacturer}");
 
             var thermal = ec.GetThermalSnapshot();
             Console.WriteLine($"Fan count: {thermal.FanCount}");

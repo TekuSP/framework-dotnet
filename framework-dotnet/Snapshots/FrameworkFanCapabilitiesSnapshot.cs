@@ -27,14 +27,4 @@ public sealed record FrameworkFanCapabilitiesSnapshot
     /// Gets the supported fan features.
     /// </summary>
     public FrameworkFanFeaturesState Features { get; init; }
-
-    /// <summary>
-    /// Gets a value indicating whether manual fan control is supported.
-    /// </summary>
-    public bool SupportsFanControl => Features.HasFlag(FrameworkFanFeaturesState.FanControl);
-
-    /// <summary>
-    /// Gets a value indicating whether thermal reporting is supported.
-    /// </summary>
-    public bool SupportsThermalReporting => Features.HasFlag(FrameworkFanFeaturesState.ThermalReporting);
 }

@@ -10,9 +10,9 @@ namespace FrameworkDotnet.Interfaces;
 public interface IFrameworkSystem
 {
     /// <summary>
-    /// Are we on FrameWork device?
+    /// Gets a cached value indicating whether the current device appears to be a Framework device.
     /// </summary>
-    /// <remarks>Caches values automatically, never should be null</remarks>
+    /// <remarks>The value is discovered on first access and cached for later calls.</remarks>
     bool? IsFrameworkDevice
     {
         get;
@@ -71,7 +71,7 @@ public interface IFrameworkSystem
     /// Opens the default embedded controller connection.
     /// </summary>
     /// <returns>An open EC connection.</returns>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
@@ -83,7 +83,7 @@ public interface IFrameworkSystem
     /// </summary>
     /// <param name="driver">The driver to use.</param>
     /// <returns>An open EC connection.</returns>
-    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the native Framework library returns an EC response failure.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>

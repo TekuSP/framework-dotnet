@@ -10,8 +10,8 @@ public sealed record FrameworkTemperatureSnapshot
     /// <summary>
     /// Initializes a new instance of the <see cref="FrameworkTemperatureSnapshot"/> class.
     /// </summary>
-    /// <param name="celsius">The temperature in degrees Celsius.</param>
     /// <param name="state">The reading state.</param>
+    /// <param name="celsius">The temperature in degrees Celsius.</param>
     public FrameworkTemperatureSnapshot(FrameworkTemperatureState state, short celsius)
     {
         State = state;
