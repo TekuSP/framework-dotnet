@@ -1,0 +1,201 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  packages: write
+  contents: read
+  actions: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  ARTIFACT_OUTPUT: '${{ github.workspace }}/artifacts'
+
+jobs:
+  build-native:
+    name: Build native framework-system rust (${{ matrix.os }} ${{ matrix.platform }})
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: Windows
+            runsOn: windows-latest
+            platform: win-x64
+            artifactPath: framework-system/target/release/framework_dotnet_ffi.dll
+          - os: Windows
+            runsOn: windows-11-arm
+            platform: win-arm64
+            artifactPath: framework-system/target/release/framework_dotnet_ffi.dll
+          - os: Linux
+            runsOn: ubuntu-latest
+            platform: linux-x64
+            artifactPath: framework-system/target/release/libframework_dotnet_ffi.so
+          - os: Linux
+            runsOn: ubuntu-24.04-arm
+            platform: linux-arm64
+            artifactPath: framework-system/target/release/libframework_dotnet_ffi.so
+
+    runs-on: ${{ matrix.runsOn }}
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Setup Rust toolchain
+      run: rustup show
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: |
+          framework-system -> target
+
+    - name: Install Linux Framework dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libudev-dev
+
+    - name: Build native library
+      run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
+
+    - name: Upload native artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: framework-dotnet-native-${{ matrix.platform }}
+        path: ${{ matrix.artifactPath }}
+        if-no-files-found: error
+
+    - name: Upload generated bindings artifact
+      if: matrix.platform == 'win-x64'
+      uses: actions/upload-artifact@v7
+      with:
+        name: framework-dotnet-bindings
+        path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
+        if-no-files-found: error
+
+    - name: "Cancel if failure"
+      if: ${{ failure() }}
+      uses: potiuk/cancel-workflow-runs@master
+      with:
+        cancelMode: self
+        cancelFutureDuplicates: false
+        selfPreservation: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  pack:
+    name: Pack and publish NuGet
+    needs: build-native
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download generated bindings artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-bindings
+        path: framework-system/framework_dotnet_ffi/csharp
+
+    - name: Download win-x64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-win-x64
+        path: artifacts/win-x64
+
+    - name: Download win-arm64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-win-arm64
+        path: artifacts/win-arm64
+
+    - name: Download linux-x64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-linux-x64
+        path: artifacts/linux-x64
+
+    - name: Download linux-arm64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-linux-arm64
+        path: artifacts/linux-arm64
+
+    - name: Set version environment variable
+      run: |
+        $tagName = "${{ github.event.release.tag_name }}"
+        # Check if the tag starts with 'v' and remove it
+        if ($tagName.StartsWith("v")) {
+            $version = $tagName.Substring(1)
+        } else {
+            $version = $tagName
+        }
+          
+        Write-Host "The original tag name was: $tagName"
+        Write-Host "The processed version is: $version"
+          
+        # Set the environment variable for subsequent steps in the same job
+        echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      shell: pwsh # Explicitly use PowerShell Core (default on windows-latest for 'run')
+
+    - name: Restore dependencies
+      run: dotnet restore -p:Version=${{ env.version }} -p:InformationalVersion=${{ env.version }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+
+    - name: Build
+      run: >-
+        dotnet build framework-dotnet/framework-dotnet.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        -p:Version=${{ env.version }} 
+        -p:InformationalVersion=${{ env.version }}+${{ github.sha }
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
+        -p:SkipRustBuild=true
+        -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}\artifacts\win-x64\framework_dotnet_ffi.dll
+        -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}\artifacts\win-arm64\framework_dotnet_ffi.dll
+        -p:FrameworkDotnetLinuxNativeLibraryPath=${{ github.workspace }}\artifacts\linux-x64\libframework_dotnet_ffi.so
+        -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}\artifacts\linux-arm64\libframework_dotnet_ffi.so
+
+    - name: Pack NuGet package
+      run: >-
+        dotnet pack framework-dotnet/framework-dotnet.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        --no-build
+        --output ${{ env.ARTIFACT_OUTPUT }}
+        -p:Version=${{ env.version }} 
+        -p:InformationalVersion=${{ env.version }}+${{ github.sha }
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
+        -p:SkipRustBuild=true
+        -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}\artifacts\win-x64\framework_dotnet_ffi.dll
+        -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}\artifacts\win-arm64\framework_dotnet_ffi.dll
+        -p:FrameworkDotnetLinuxNativeLibraryPath=${{ github.workspace }}\artifacts\linux-x64\libframework_dotnet_ffi.so
+        -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}\artifacts\linux-arm64\libframework_dotnet_ffi.so
+
+    - name: Upload NuGet package artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: framework-dotnet-nuget
+        path: ${{ env.ARTIFACT_OUTPUT }}
+        if-no-files-found: error
+    - name: Push nugets to Github
+      run: |
+        nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
+        nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source "GitHub"
+        nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -NoSymbols -SkipDuplicate -ApiKey ${{ secrets.NUGET_KEY }}
+
