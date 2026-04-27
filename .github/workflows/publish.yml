@@ -158,7 +158,7 @@ jobs:
         --configuration Release
         --no-restore
         -p:Version=${{ env.version }} 
-        -p:InformationalVersion=${{ env.version }}+${{ github.sha }
+        -p:InformationalVersion=${{ env.version }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
@@ -177,7 +177,7 @@ jobs:
         --no-build
         --output ${{ env.ARTIFACT_OUTPUT }}
         -p:Version=${{ env.version }} 
-        -p:InformationalVersion=${{ env.version }}+${{ github.sha }
+        -p:InformationalVersion=${{ env.version }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
