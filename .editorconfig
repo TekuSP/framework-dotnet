@@ -6,6 +6,11 @@ end_of_line = crlf
 insert_final_newline = true
 indent_style = space
 indent_size = 4
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_style_qualification_for_event = false:suggestion
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
 
 # Keep analyzer rollout minimal and aligned with current repo preferences.
 # Default StyleCop rules off until explicitly enabled.
@@ -22,20 +27,31 @@ dotnet_diagnostic.SA1200.severity = suggestion
 dotnet_diagnostic.SA1208.severity = suggestion
 dotnet_diagnostic.SA1210.severity = suggestion
 dotnet_diagnostic.SA1402.severity = warning
+dotnet_diagnostic.SA1507.severity = warning
+dotnet_diagnostic.SA1516.severity = warning
 dotnet_diagnostic.SA1600.severity = warning
 dotnet_diagnostic.SA1601.severity = warning
 dotnet_diagnostic.SA1602.severity = warning
 dotnet_diagnostic.SA1604.severity = warning
 dotnet_diagnostic.SA1605.severity = warning
+dotnet_diagnostic.SA1649.severity = warning
 dotnet_diagnostic.SA1633.severity = none
 dotnet_diagnostic.SA0001.severity = none
 dotnet_diagnostic.CS8669.severity = none
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.IDE0161.severity = warning
 
 # Do not require documentation on internal/private implementation details.
 dotnet_diagnostic.SA1600.api_surface = public
 
 # Generated and externally produced code should not be style-gated.
-[**/Generated/*.cs]
+[framework-dotnet/Generated/**/*.cs]
+generated_code = true
+
+[framework-dotnet/Generated/*.cs]
+generated_code = true
+
+[**/Generated/**/*.cs]
 generated_code = true
 
 [**/*.g.cs]

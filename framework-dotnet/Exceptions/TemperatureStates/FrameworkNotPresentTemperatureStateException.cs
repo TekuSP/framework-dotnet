@@ -1,4 +1,5 @@
 using Framework.System.Interop;
+
 namespace FrameworkDotnet.Exceptions.TemperatureStates;
 
 /// <summary>

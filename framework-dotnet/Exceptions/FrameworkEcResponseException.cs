@@ -26,6 +26,7 @@ public class FrameworkEcResponseException : FrameworkStatusCodeException
     {
         return GetCorrectException((FrameworkEcResponseDetail)(int)statusCode);
     }
+
     internal static FrameworkStatusException GetCorrectException(FrameworkEcResponseDetail statusCode)
     {
         switch (statusCode)

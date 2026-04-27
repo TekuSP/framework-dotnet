@@ -1,4 +1,5 @@
 using Framework.System.Interop;
+
 namespace FrameworkDotnet.Exceptions.TemperatureStates;
 
 /// <summary>
@@ -6,7 +7,8 @@ namespace FrameworkDotnet.Exceptions.TemperatureStates;
 /// </summary>
 internal class FrameworkNotCalibratedTemperatureStateException : FrameworkTemperatureStateException
 {
-    internal FrameworkNotCalibratedTemperatureStateException(): base(FrameworkTemperatureState.NotCalibrated)
+    internal FrameworkNotCalibratedTemperatureStateException()
+        : base(FrameworkTemperatureState.NotCalibrated)
     {
     }
 }

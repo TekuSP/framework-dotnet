@@ -126,7 +126,6 @@ public sealed record FrameworkThermalSnapshot
         get;
     }
 
-
     /// <summary>
     /// Gets all temperature readings in index order.
     /// </summary>
