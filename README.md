@@ -34,33 +34,75 @@ It is best validated with a small smoke-test console app on a real device, becau
 
 ```csharp
 using FrameworkDotnet;
+using FrameworkDotnet.Enums;
+using Spectre.Console;
+using System.Text;
 using UnitsNet;
 
-var frameworkSystem = new FrameworkSystem();
-
-Console.WriteLine($"Product: {frameworkSystem.GetProductName()}");
-Console.WriteLine($"Platform: {frameworkSystem.GetPlatform()}");
-
-using var ec = frameworkSystem.OpenDefaultEc();
-
-var power = ec.GetPowerSnapshot();
-var thermal = ec.GetThermalSnapshot();
-
-Console.WriteLine($"Battery count: {power.BatteryCount}");
-Console.WriteLine($"Battery 0 charge: {power.Battery_0.ChargeLevel.Percent}%");
-Console.WriteLine($"Temperature 0: {thermal.Temperature_0.Temperature.DegreesCelsius}C");
-
-foreach (var fan in thermal.ReportedFans)
+FrameworkSystem FrameworkSystem = new FrameworkSystem();
+using var ec = FrameworkSystem.OpenDefaultEc();
+while (true)
 {
-    Console.WriteLine($"Fan speed: {fan.Speed.RevolutionsPerMinute} RPM ({fan.FanState})");
+    AnsiConsole.Clear();
+
+    var fanCapabilitiesSnapshot = ec.GetFanCapabilitiesSnapshot();
+    var powerSnapshot = ec.GetPowerSnapshot();
+    var thermalSnapshot = ec.GetThermalSnapshot();
+
+    // 1. Build the top section using a StringBuilder
+    var sysInfo = new StringBuilder();
+
+    sysInfo.AppendLine($"[cyan]Product:[/] {FrameworkSystem.GetProductName()}");
+    sysInfo.AppendLine($"[cyan]Platform:[/] {FrameworkSystem.GetPlatform()}");
+    sysInfo.AppendLine($"[cyan]Family:[/] {FrameworkSystem.GetPlatformFamily()}");
+    sysInfo.AppendLine();
+
+    sysInfo.AppendLine("[cyan bold]Driver support:[/]");
+    foreach (FrameworkEcDriver driver in Enum.GetValues<FrameworkEcDriver>())
+    {
+        bool isSupported = FrameworkSystem.IsDriverSupported(driver);
+        string color = isSupported ? "green" : "red";
+        sysInfo.AppendLine($"  [teal]{driver}:[/] [{color}]{isSupported}[/]");
+    }
+    sysInfo.AppendLine();
+
+    sysInfo.AppendLine($"[cyan]Active driver:[/] {ec.GetActiveDriver()}");
+    sysInfo.AppendLine($"[cyan]Build info:[/] [grey]{ec.GetBuildInfo()}[/]");
+
+    var flash = ec.GetFlashSnapshot();
+    sysInfo.AppendLine($"[cyan]Flash:[/] {flash.CurrentImage}, [grey]RO=[/][yellow]{flash.RoVersion}[/], [grey]RW=[/][yellow]{flash.RwVersion}[/]");
+
+    // 2. Render the top section inside a Panel
+    AnsiConsole.Write(
+        new Panel(new Markup(sysInfo.ToString()))
+            .Header("[bold blue]System Information[/]")
+            .BorderColor(Color.Blue));
+
+    // 3. Render the Snapshots (as we did before)
+    var fanText = fanCapabilitiesSnapshot.ToString().Replace(", ", Environment.NewLine);
+    AnsiConsole.Write(
+        new Panel(fanText)
+            .Header("[bold magenta]Fan Capabilities Snapshot[/]")
+            .BorderColor(Color.Magenta));
+
+    var powerText = powerSnapshot.ToString().Replace(", ", Environment.NewLine);
+    AnsiConsole.Write(
+        new Panel(powerText)
+            .Header("[bold green]Power Snapshot[/]")
+            .BorderColor(Color.Green));
+
+    var thermalText = thermalSnapshot.ToString().Replace(", ", Environment.NewLine);
+    AnsiConsole.Write(
+        new Panel(thermalText)
+            .Header("[bold red]Thermal Snapshot[/]")
+            .BorderColor(Color.Red));
+
+    Thread.Sleep(10000);
 }
-
-var setFanRpmResponse = ec.SetFanRpm(0, RotationalSpeed.FromRevolutionsPerMinute(2500));
-Console.WriteLine($"Applied fan speed: {setFanRpmResponse.AppliedSpeed.RevolutionsPerMinute} RPM");
-
-var setFanDutyResponse = ec.SetFanDuty(0, Ratio.FromPercent(35));
-Console.WriteLine($"Applied fan duty: {setFanDutyResponse.AppliedDutyCycle.Percent}%");
 ```
+
+<img width="939" height="1419" alt="image" src="https://github.com/user-attachments/assets/9e45e991-2cfa-4b30-bfda-d680f2cc9b88" />
+
 
 ## Public API at a glance
 
