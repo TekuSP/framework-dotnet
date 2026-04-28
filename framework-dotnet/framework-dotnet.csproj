@@ -93,6 +93,26 @@
     </ItemGroup>
   </Target>
 
+  <!-- When SkipRustBuild=true the native library is supplied externally via FrameworkDotnet*NativeLibraryPath.
+       Detect the current OS/architecture and copy the matching native library into the build output. -->
+  <PropertyGroup Condition="'$(SkipRustBuild)' == 'true'">
+    <_CurrentArch>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)</_CurrentArch>
+    <_ExternalNativeLibraryPath Condition="'$(OS)' == 'Windows_NT' AND '$(_CurrentArch)' == 'X64'">$(FrameworkDotnetWindowsNativeLibraryPath)</_ExternalNativeLibraryPath>
+    <_ExternalNativeLibraryPath Condition="'$(OS)' == 'Windows_NT' AND '$(_CurrentArch)' == 'Arm64'">$(FrameworkDotnetWindowsArm64NativeLibraryPath)</_ExternalNativeLibraryPath>
+    <_ExternalNativeLibraryPath Condition="'$(OS)' != 'Windows_NT' AND '$(_CurrentArch)' == 'X64'">$(FrameworkDotnetLinuxNativeLibraryPath)</_ExternalNativeLibraryPath>
+    <_ExternalNativeLibraryPath Condition="'$(OS)' != 'Windows_NT' AND '$(_CurrentArch)' == 'Arm64'">$(FrameworkDotnetLinuxArm64NativeLibraryPath)</_ExternalNativeLibraryPath>
+  </PropertyGroup>
+
+  <Target Name="IncludeExternalRustNativeLibraryInOutput" BeforeTargets="GetCopyToOutputDirectoryItems"
+          Condition="'$(SkipRustBuild)' == 'true' AND Exists('$(_ExternalNativeLibraryPath)')">
+    <ItemGroup>
+      <ContentWithTargetPath Include="$(_ExternalNativeLibraryPath)">
+        <TargetPath>$(RustNativeLibraryName)</TargetPath>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </ContentWithTargetPath>
+    </ItemGroup>
+  </Target>
+
   <Target Name="WarnIfPackNativeAssetsMissing" BeforeTargets="GenerateNuspec">
     <Warning Condition="!Exists('$(FrameworkDotnetWindowsNativeLibraryPath)')" Text="Windows native asset not found at $(FrameworkDotnetWindowsNativeLibraryPath). The NuGet package will not contain runtimes/win-x64/native/framework_dotnet_ffi.dll." />
     <Warning Condition="!Exists('$(FrameworkDotnetWindowsArm64NativeLibraryPath)')" Text="Windows ARM64 native asset not found at $(FrameworkDotnetWindowsArm64NativeLibraryPath). Build the Rust library for aarch64-pc-windows-msvc or set FrameworkDotnetWindowsArm64NativeLibraryPath before packing if you want runtimes/win-arm64/native/framework_dotnet_ffi.dll included." />

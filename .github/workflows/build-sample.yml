@@ -1,0 +1,215 @@
+name: Build Sample App and publish
+
+on:
+  push:
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+concurrency:
+  group: build-sample-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  packages: write
+  contents: read
+  actions: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  VERSION_PREFIX: '0.2'
+
+jobs:
+  build-native:
+    name: Build native framework-system rust (${{ matrix.os }} ${{ matrix.platform }})
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: Windows
+            runsOn: windows-latest
+            platform: win-x64
+            artifactPath: framework-system/target/release/framework_dotnet_ffi.dll
+          - os: Windows
+            runsOn: windows-11-arm
+            platform: win-arm64
+            artifactPath: framework-system/target/release/framework_dotnet_ffi.dll
+          - os: Linux
+            runsOn: ubuntu-latest
+            platform: linux-x64
+            artifactPath: framework-system/target/release/libframework_dotnet_ffi.so
+          - os: Linux
+            runsOn: ubuntu-24.04-arm
+            platform: linux-arm64
+            artifactPath: framework-system/target/release/libframework_dotnet_ffi.so
+
+    runs-on: ${{ matrix.runsOn }}
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Setup Rust toolchain
+      run: rustup show
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: |
+          framework-system -> target
+
+    - name: Install Linux Framework dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libudev-dev
+
+    - name: Build native library
+      run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
+
+    - name: Upload native artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: framework-dotnet-native-${{ matrix.platform }}
+        path: ${{ matrix.artifactPath }}
+        if-no-files-found: error
+
+    - name: Upload generated bindings artifact
+      if: matrix.platform == 'win-x64'
+      uses: actions/upload-artifact@v7
+      with:
+        name: framework-dotnet-bindings
+        path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
+        if-no-files-found: error
+
+    - name: "Cancel if failure"
+      if: ${{ failure() }}
+      uses: potiuk/cancel-workflow-runs@master
+      with:
+        cancelMode: self
+        cancelFutureDuplicates: false
+        selfPreservation: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build library + sample app (${{ matrix.os }} ${{ matrix.platform }})
+    needs: build-native
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: Windows
+            runsOn: windows-latest
+            platform: win-x64
+          - os: Windows
+            runsOn: windows-11-arm
+            platform: win-arm64
+          - os: Linux
+            runsOn: ubuntu-latest
+            platform: linux-x64
+          - os: Linux
+            runsOn: ubuntu-24.04-arm
+            platform: linux-arm64
+            
+    runs-on: ${{ matrix.runsOn }}
+    
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download generated bindings artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-bindings
+        path: framework-system/framework_dotnet_ffi/csharp
+
+    - name: Download win-x64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-win-x64
+        path: artifacts/win-x64
+
+    - name: Download win-arm64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-win-arm64
+        path: artifacts/win-arm64
+
+    - name: Download linux-x64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-linux-x64
+        path: artifacts/linux-x64
+
+    - name: Download linux-arm64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-linux-arm64
+        path: artifacts/linux-arm64
+
+    - name: Restore dependencies for library
+      run: dotnet restore -v normal -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+
+    - name: Restore dependencies for sample app
+      run: dotnet restore framework-dotnet-cli-test/framework-dotnet-cli-test.csproj -v normal -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+
+    - name: Build library
+      run: >-
+        dotnet build framework-dotnet/framework-dotnet.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
+        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
+        -p:SkipRustBuild=true
+        -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}/artifacts/win-x64/framework_dotnet_ffi.dll
+        -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}/artifacts/win-arm64/framework_dotnet_ffi.dll
+        -p:FrameworkDotnetLinuxNativeLibraryPath=${{ github.workspace }}/artifacts/linux-x64/libframework_dotnet_ffi.so
+        -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}/artifacts/linux-arm64/libframework_dotnet_ffi.so
+        
+    - name: Build sample app
+      run: >-
+        dotnet build framework-dotnet-cli-test/framework-dotnet-cli-test.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
+        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
+        -p:SkipRustBuild=true
+        
+    - name: Publish sample app
+      run: >-
+        dotnet publish framework-dotnet-cli-test/framework-dotnet-cli-test.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        --no-build
+        --output ${{ github.workspace }}/artifacts/sample-app/${{ matrix.platform }}
+        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
+        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
+        -p:SkipRustBuild=true
+
+    - name: Upload sample app artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: framework-dotnet-sample-app-${{ matrix.platform }}
+        path: ${{ github.workspace }}/artifacts/sample-app/${{ matrix.platform }}
+        if-no-files-found: error
+        retention-days: 90
+
