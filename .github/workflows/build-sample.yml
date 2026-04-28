@@ -58,9 +58,10 @@ jobs:
     - name: Capture Rust submodule revision
       shell: bash
       run: |
-        echo "RUST_SUBMODULE_SHA=$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
-        echo "RUST_NATIVE_CACHE_KEY=rust-native-${{ matrix.platform }}-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
-        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+        rust_submodule_sha="$(git -C framework-system rev-parse HEAD)"
+        echo "RUST_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_NATIVE_CACHE_KEY=rust-native-${{ matrix.platform }}-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$rust_submodule_sha" >> "$GITHUB_ENV"
 
     - name: Check Rust native output cache
       id: rust-native-cache-lookup
@@ -177,8 +178,9 @@ jobs:
     - name: Capture Rust submodule revision
       shell: bash
       run: |
-        echo "RUST_SUBMODULE_SHA=$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
-        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+        rust_submodule_sha="$(git -C framework-system rev-parse HEAD)"
+        echo "RUST_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$rust_submodule_sha" >> "$GITHUB_ENV"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
