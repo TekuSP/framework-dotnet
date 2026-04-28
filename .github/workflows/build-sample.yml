@@ -18,7 +18,6 @@ permissions:
 env:
   DOTNET_VERSION: '10.0.x'
   VERSION_PREFIX: '0.2'
-  ARTIFACT_OUTPUT: '${{ github.workspace }}/artifacts'
 
 jobs:
   build-native:
@@ -173,10 +172,10 @@ jobs:
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
         -p:SkipRustBuild=true
-        -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}\artifacts\win-x64\framework_dotnet_ffi.dll
-        -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}\artifacts\win-arm64\framework_dotnet_ffi.dll
-        -p:FrameworkDotnetLinuxNativeLibraryPath=${{ github.workspace }}\artifacts\linux-x64\libframework_dotnet_ffi.so
-        -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}\artifacts\linux-arm64\libframework_dotnet_ffi.so
+        -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}/artifacts/win-x64/framework_dotnet_ffi.dll
+        -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}/artifacts/win-arm64/framework_dotnet_ffi.dll
+        -p:FrameworkDotnetLinuxNativeLibraryPath=${{ github.workspace }}/artifacts/linux-x64/libframework_dotnet_ffi.so
+        -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}/artifacts/linux-arm64/libframework_dotnet_ffi.so
         
     - name: Build sample app
       run: >-
@@ -198,7 +197,7 @@ jobs:
         --configuration Release
         --no-restore
         --no-build
-        --output ${{ env.ARTIFACT_OUTPUT }}
+        --output ${{ github.workspace }}/artifacts/sample-app/${{ matrix.platform }}
         -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
         -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
@@ -209,8 +208,8 @@ jobs:
     - name: Upload sample app artifact
       uses: actions/upload-artifact@v7
       with:
-        name: framework-dotnet-sample-app
-        path: ${{ env.ARTIFACT_OUTPUT }}
+        name: framework-dotnet-sample-app-${{ matrix.platform }}
+        path: ${{ github.workspace }}/artifacts/sample-app/${{ matrix.platform }}
         if-no-files-found: error
         retention-days: 90
 
