@@ -20,7 +20,7 @@ env:
   VERSION_PREFIX: '0.2'
   ARTIFACT_OUTPUT: '${{ github.workspace }}/artifacts'
   NUGET_PACKAGES: '${{ github.workspace }}/.nuget/packages'
-  RUST_NATIVE_CACHE_VERSION: 'v1'
+  RUST_NATIVE_CACHE_VERSION: 'v2'
 
 jobs:
   build-native:
@@ -32,19 +32,23 @@ jobs:
           - os: Windows
             runsOn: windows-latest
             platform: win-x64
-            artifactPath: framework-system/target/release/framework_dotnet_ffi.dll
+            buildOutputPath: framework-system/target/release/framework_dotnet_ffi.dll
+            cachePath: artifacts/win-x64/framework_dotnet_ffi.dll
           - os: Windows
             runsOn: windows-11-arm
             platform: win-arm64
-            artifactPath: framework-system/target/release/framework_dotnet_ffi.dll
+            buildOutputPath: framework-system/target/release/framework_dotnet_ffi.dll
+            cachePath: artifacts/win-arm64/framework_dotnet_ffi.dll
           - os: Linux
             runsOn: ubuntu-latest
             platform: linux-x64
-            artifactPath: framework-system/target/release/libframework_dotnet_ffi.so
+            buildOutputPath: framework-system/target/release/libframework_dotnet_ffi.so
+            cachePath: artifacts/linux-x64/libframework_dotnet_ffi.so
           - os: Linux
             runsOn: ubuntu-24.04-arm
             platform: linux-arm64
-            artifactPath: framework-system/target/release/libframework_dotnet_ffi.so
+            buildOutputPath: framework-system/target/release/libframework_dotnet_ffi.so
+            cachePath: artifacts/linux-arm64/libframework_dotnet_ffi.so
 
     runs-on: ${{ matrix.runsOn }}
 
@@ -55,57 +59,78 @@ jobs:
 
     - name: Capture Rust submodule revision
       shell: bash
-      run: echo "RUST_SUBMODULE_SHA=$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+      run: |
+        echo "RUST_SUBMODULE_SHA=$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+        echo "RUST_NATIVE_CACHE_KEY=rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-${{ matrix.platform }}-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-${{ env.RUST_NATIVE_CACHE_VERSION }}-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
 
-    - name: Restore Rust native outputs cache
-      id: rust-native-output-cache
-      uses: actions/cache/restore@v4
+    - name: Check Rust native output cache
+      id: rust-native-cache-lookup
+      uses: actions/cache@v4
       with:
-        path: |
-          ${{ matrix.artifactPath }}
-          framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-${{ matrix.platform }}-${{ env.RUST_SUBMODULE_SHA }}
+        path: ${{ matrix.cachePath }}
+        key: ${{ env.RUST_NATIVE_CACHE_KEY }}
+        lookup-only: true
+        enableCrossOsArchive: true
+
+    - name: Check Rust bindings cache
+      if: matrix.platform == 'win-x64'
+      id: rust-bindings-cache-lookup
+      uses: actions/cache@v4
+      with:
+        path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
+        key: ${{ env.RUST_BINDINGS_CACHE_KEY }}
+        lookup-only: true
+        enableCrossOsArchive: true
+
+    - name: Decide whether Rust build can be skipped
+      shell: bash
+      run: |
+        if [[ "${{ steps.rust-native-cache-lookup.outputs.cache-hit }}" == "true" ]] && [[ "${{ matrix.platform }}" != "win-x64" || "${{ steps.rust-bindings-cache-lookup.outputs.cache-hit }}" == "true" ]]; then
+          echo "RUST_BUILD_SKIPPED=true" >> "$GITHUB_ENV"
+        else
+          echo "RUST_BUILD_SKIPPED=false" >> "$GITHUB_ENV"
+        fi
 
     - name: Setup Rust toolchain
-      if: steps.rust-native-output-cache.outputs.cache-hit != 'true'
+      if: env.RUST_BUILD_SKIPPED != 'true'
       run: rustup show
 
     - name: Cache Rust dependencies
-      if: steps.rust-native-output-cache.outputs.cache-hit != 'true'
+      if: env.RUST_BUILD_SKIPPED != 'true'
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: |
           framework-system -> target
 
     - name: Install Linux Framework dependencies
-      if: runner.os == 'Linux' && steps.rust-native-output-cache.outputs.cache-hit != 'true'
+      if: runner.os == 'Linux' && env.RUST_BUILD_SKIPPED != 'true'
       run: |
         sudo apt-get update
         sudo apt-get install -y libudev-dev
 
     - name: Build native library
-      if: steps.rust-native-output-cache.outputs.cache-hit != 'true'
+      if: env.RUST_BUILD_SKIPPED != 'true'
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
 
-    - name: Save Rust native outputs cache
-      if: steps.rust-native-output-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          ${{ matrix.artifactPath }}
-          framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-${{ matrix.platform }}-${{ env.RUST_SUBMODULE_SHA }}
+    - name: Stage native library for cache reuse
+      if: env.RUST_BUILD_SKIPPED != 'true'
+      shell: bash
+      run: |
+        mkdir -p "$(dirname "${{ matrix.cachePath }}")"
+        cp "${{ matrix.buildOutputPath }}" "${{ matrix.cachePath }}"
 
     - name: Upload native artifact
+      if: env.RUST_BUILD_SKIPPED != 'true'
       uses: actions/upload-artifact@v7
       with:
         name: framework-dotnet-native-${{ matrix.platform }}
-        path: ${{ matrix.artifactPath }}
+        path: ${{ matrix.cachePath }}
         if-no-files-found: error
         retention-days: 1
 
     - name: Upload generated bindings artifact
-      if: matrix.platform == 'win-x64'
+      if: matrix.platform == 'win-x64' && env.RUST_BUILD_SKIPPED != 'true'
       uses: actions/upload-artifact@v7
       with:
         name: framework-dotnet-bindings
@@ -132,6 +157,12 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Capture Rust submodule revision
+      shell: bash
+      run: |
+        echo "RUST_SUBMODULE_SHA=$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-${{ env.RUST_NATIVE_CACHE_VERSION }}-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
@@ -145,35 +176,45 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-${{ runner.arch }}-nuget-
 
-    - name: Download generated bindings artifact
-      uses: actions/download-artifact@v8
+    - name: Restore generated bindings cache
+      uses: actions/cache/restore@v4
       with:
-        name: framework-dotnet-bindings
-        path: framework-system/framework_dotnet_ffi/csharp
+        path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
+        key: ${{ env.RUST_BINDINGS_CACHE_KEY }}
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
 
-    - name: Download win-x64 native artifact
-      uses: actions/download-artifact@v8
+    - name: Restore win-x64 native cache
+      uses: actions/cache/restore@v4
       with:
-        name: framework-dotnet-native-win-x64
-        path: artifacts/win-x64
+        path: artifacts/win-x64/framework_dotnet_ffi.dll
+        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-win-x64-${{ env.RUST_SUBMODULE_SHA }}
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
 
-    - name: Download win-arm64 native artifact
-      uses: actions/download-artifact@v8
+    - name: Restore win-arm64 native cache
+      uses: actions/cache/restore@v4
       with:
-        name: framework-dotnet-native-win-arm64
-        path: artifacts/win-arm64
+        path: artifacts/win-arm64/framework_dotnet_ffi.dll
+        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-win-arm64-${{ env.RUST_SUBMODULE_SHA }}
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
 
-    - name: Download linux-x64 native artifact
-      uses: actions/download-artifact@v8
+    - name: Restore linux-x64 native cache
+      uses: actions/cache/restore@v4
       with:
-        name: framework-dotnet-native-linux-x64
-        path: artifacts/linux-x64
+        path: artifacts/linux-x64/libframework_dotnet_ffi.so
+        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-linux-x64-${{ env.RUST_SUBMODULE_SHA }}
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
 
-    - name: Download linux-arm64 native artifact
-      uses: actions/download-artifact@v8
+    - name: Restore linux-arm64 native cache
+      uses: actions/cache/restore@v4
       with:
-        name: framework-dotnet-native-linux-arm64
-        path: artifacts/linux-arm64
+        path: artifacts/linux-arm64/libframework_dotnet_ffi.so
+        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-linux-arm64-${{ env.RUST_SUBMODULE_SHA }}
+        fail-on-cache-miss: true
+        enableCrossOsArchive: true
 
     - name: Restore dependencies
       run: dotnet restore -v normal -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
