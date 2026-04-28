@@ -59,9 +59,14 @@ jobs:
       shell: bash
       run: |
         rust_submodule_sha="$(git -C framework-system rev-parse HEAD)"
+        rust_cache_scope="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+        rust_cache_scope="${rust_cache_scope//\//-}"
+        rust_cache_scope="${rust_cache_scope// /-}"
+        rust_cache_namespace="${GITHUB_WORKFLOW// /-}"
+        rust_cache_namespace="${rust_cache_namespace//\//-}"
         echo "RUST_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_NATIVE_CACHE_KEY=rust-native-${{ matrix.platform }}-$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_NATIVE_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-${{ matrix.platform }}-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$rust_cache_namespace-$rust_cache_scope-$rust_submodule_sha" >> "$GITHUB_ENV"
 
     - name: Check Rust native output cache
       id: rust-native-cache-lookup
@@ -177,8 +182,17 @@ jobs:
       shell: bash
       run: |
         rust_submodule_sha="$(git -C framework-system rev-parse HEAD)"
+        rust_cache_scope="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+        rust_cache_scope="${rust_cache_scope//\//-}"
+        rust_cache_scope="${rust_cache_scope// /-}"
+        rust_cache_namespace="${GITHUB_WORKFLOW// /-}"
+        rust_cache_namespace="${rust_cache_namespace//\//-}"
         echo "RUST_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$rust_cache_namespace-$rust_cache_scope-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_NATIVE_WIN_X64_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-win-x64-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_NATIVE_WIN_ARM64_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-win-arm64-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_NATIVE_LINUX_X64_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-linux-x64-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "RUST_NATIVE_LINUX_ARM64_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-linux-arm64-$rust_submodule_sha" >> "$GITHUB_ENV"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
@@ -205,7 +219,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/win-x64/framework_dotnet_ffi.dll
-        key: rust-native-win-x64-${{ env.RUST_SUBMODULE_SHA }}
+        key: ${{ env.RUST_NATIVE_WIN_X64_CACHE_KEY }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -213,7 +227,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/win-arm64/framework_dotnet_ffi.dll
-        key: rust-native-win-arm64-${{ env.RUST_SUBMODULE_SHA }}
+        key: ${{ env.RUST_NATIVE_WIN_ARM64_CACHE_KEY }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -221,7 +235,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/linux-x64/libframework_dotnet_ffi.so
-        key: rust-native-linux-x64-${{ env.RUST_SUBMODULE_SHA }}
+        key: ${{ env.RUST_NATIVE_LINUX_X64_CACHE_KEY }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -229,7 +243,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/linux-arm64/libframework_dotnet_ffi.so
-        key: rust-native-linux-arm64-${{ env.RUST_SUBMODULE_SHA }}
+        key: ${{ env.RUST_NATIVE_LINUX_ARM64_CACHE_KEY }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
