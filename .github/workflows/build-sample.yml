@@ -19,6 +19,7 @@ env:
   DOTNET_VERSION: '10.0.x'
   VERSION_PREFIX: '0.2'
   NUGET_PACKAGES: '${{ github.workspace }}/.nuget/packages'
+  RUST_NATIVE_CACHE_VERSION: 'v1'
 
 jobs:
   build-native:
@@ -51,23 +52,48 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Capture Rust submodule revision
+      shell: bash
+      run: echo "RUST_SUBMODULE_SHA=$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+
+    - name: Restore Rust native outputs cache
+      id: rust-native-output-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${{ matrix.artifactPath }}
+          framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
+        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-${{ matrix.platform }}-${{ env.RUST_SUBMODULE_SHA }}
+
     - name: Setup Rust toolchain
+      if: steps.rust-native-output-cache.outputs.cache-hit != 'true'
       run: rustup show
 
     - name: Cache Rust dependencies
+      if: steps.rust-native-output-cache.outputs.cache-hit != 'true'
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: |
           framework-system -> target
 
     - name: Install Linux Framework dependencies
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && steps.rust-native-output-cache.outputs.cache-hit != 'true'
       run: |
         sudo apt-get update
         sudo apt-get install -y libudev-dev
 
     - name: Build native library
+      if: steps.rust-native-output-cache.outputs.cache-hit != 'true'
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
+
+    - name: Save Rust native outputs cache
+      if: steps.rust-native-output-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ matrix.artifactPath }}
+          framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
+        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-${{ matrix.platform }}-${{ env.RUST_SUBMODULE_SHA }}
 
     - name: Upload native artifact
       uses: actions/upload-artifact@v7
