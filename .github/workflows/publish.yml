@@ -59,7 +59,7 @@ jobs:
 
     - name: Check Rust native output cache
       id: rust-native-cache-lookup
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: ${{ matrix.cachePath }}
         key: ${{ env.RUST_NATIVE_CACHE_KEY }}
@@ -69,7 +69,7 @@ jobs:
     - name: Check Rust bindings cache
       if: matrix.platform == 'win-x64'
       id: rust-bindings-cache-lookup
-      uses: actions/cache@v4
+      uses: actions/cache/restore@v4
       with:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
         key: ${{ env.RUST_BINDINGS_CACHE_KEY }}
@@ -115,23 +115,21 @@ jobs:
         mkdir -p "$(dirname "${{ matrix.cachePath }}")"
         cp "${{ matrix.buildOutputPath }}" "${{ matrix.cachePath }}"
 
-    - name: Upload native artifact
+    - name: Save native library cache
       if: env.RUST_BUILD_SKIPPED != 'true'
-      uses: actions/upload-artifact@v7
+      uses: actions/cache/save@v4
       with:
-        name: framework-dotnet-native-${{ matrix.platform }}
         path: ${{ matrix.cachePath }}
-        if-no-files-found: error
-        retention-days: 1
+        key: ${{ env.RUST_NATIVE_CACHE_KEY }}
+        enableCrossOsArchive: true
 
-    - name: Upload generated bindings artifact
+    - name: Save generated bindings cache
       if: matrix.platform == 'win-x64' && env.RUST_BUILD_SKIPPED != 'true'
-      uses: actions/upload-artifact@v7
+      uses: actions/cache/save@v4
       with:
-        name: framework-dotnet-bindings
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        if-no-files-found: error
-        retention-days: 1
+        key: ${{ env.RUST_BINDINGS_CACHE_KEY }}
+        enableCrossOsArchive: true
 
     - name: "Cancel if failure"
       if: ${{ failure() }}
