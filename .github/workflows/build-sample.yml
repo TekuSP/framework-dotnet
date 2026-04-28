@@ -18,6 +18,7 @@ permissions:
 env:
   DOTNET_VERSION: '10.0.x'
   VERSION_PREFIX: '0.2'
+  NUGET_PACKAGES: '${{ github.workspace }}/.nuget/packages'
 
 jobs:
   build-native:
@@ -129,7 +130,7 @@ jobs:
     - name: Cache NuGet packages
       uses: actions/cache@v4
       with:
-        path: ~/.nuget/packages
+        path: ${{ env.NUGET_PACKAGES }}
         key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props', '**/*.targets', '**/*.sln', '**/*.slnx') }}
         restore-keys: |
           ${{ runner.os }}-${{ runner.arch }}-nuget-
