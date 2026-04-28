@@ -61,7 +61,7 @@ jobs:
 
     - name: Check Rust native output cache
       id: rust-native-cache-lookup
-      uses: actions/cache@v6
+      uses: actions/cache@v5
       with:
         path: ${{ matrix.buildOutputPath }}
         key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-rust-native-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
@@ -71,7 +71,7 @@ jobs:
     - name: Check Rust bindings cache
       if: matrix.platform == 'win-x64'
       id: rust-bindings-cache-lookup
-      uses: actions/cache@v6
+      uses: actions/cache@v5
       with:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
         key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
@@ -84,7 +84,7 @@ jobs:
 
     - name: Cache Rust dependencies
       if: ${{ (steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true') }}
-      uses: actions/cache@v6
+      uses: actions/cache@v5
       with:
         path: |
           ~/.cargo/bin/
@@ -104,7 +104,7 @@ jobs:
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
 
     - name: Save Rust native output cache
-      uses: actions/cache@v6
+      uses: actions/cache@v5
       if: ${{ (steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true') }}
       with:
         path: ${{ matrix.buildOutputPath }}
@@ -113,7 +113,7 @@ jobs:
 
     - name: Save Rust bindings cache
       if: ${{(matrix.platform == 'win-x64') && ((steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true')) }}
-      uses: actions/cache@v6
+      uses: actions/cache@v5
       with:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
         key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
@@ -168,7 +168,7 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - uses: actions/cache@v6
+    - uses: actions/cache@v5
       name: Cache .NET dependencies
       with:
         path: ~/.nuget/packages
