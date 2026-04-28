@@ -68,6 +68,7 @@ jobs:
         name: framework-dotnet-native-${{ matrix.platform }}
         path: ${{ matrix.artifactPath }}
         if-no-files-found: error
+        retention-days: 1
 
     - name: Upload generated bindings artifact
       if: matrix.platform == 'win-x64'
@@ -76,6 +77,7 @@ jobs:
         name: framework-dotnet-bindings
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
         if-no-files-found: error
+        retention-days: 1
 
     - name: "Cancel if failure"
       if: ${{ failure() }}
@@ -100,6 +102,14 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props', '**/*.targets', '**/*.sln', '**/*.slnx') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-nuget-
 
     - name: Download generated bindings artifact
       uses: actions/download-artifact@v8
@@ -198,4 +208,3 @@ jobs:
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source "GitHub"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -NoSymbols -SkipDuplicate -ApiKey ${{ secrets.NUGET_KEY }}
-
