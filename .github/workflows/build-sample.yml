@@ -84,10 +84,12 @@ jobs:
     - name: Decide whether Rust build can be skipped
       shell: bash
       run: |
-        if [[ "${{ steps.rust-native-cache-lookup.outputs.cache-hit }}" == "true" ]] && [[ "${{ matrix.platform }}" != "win-x64" || "${{ steps.rust-bindings-cache-lookup.outputs.cache-hit }}" == "true" ]]; then
-          echo "RUST_BUILD_SKIPPED=true" >> "$GITHUB_ENV"
-        else
+        if [[ "${{ steps.rust-native-cache-lookup.outputs.cache-hit }}" != "true" ]]; then
           echo "RUST_BUILD_SKIPPED=false" >> "$GITHUB_ENV"
+        elif [[ "${{ matrix.platform }}" == "win-x64" && "${{ steps.rust-bindings-cache-lookup.outputs.cache-hit }}" != "true" ]]; then
+          echo "RUST_BUILD_SKIPPED=false" >> "$GITHUB_ENV"
+        else
+          echo "RUST_BUILD_SKIPPED=true" >> "$GITHUB_ENV"
         fi
 
     - name: Setup Rust toolchain
