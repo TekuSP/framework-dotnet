@@ -54,7 +54,7 @@ jobs:
         submodules: recursive
 
     - name: Capture Rust submodule revision
-      shell: pwsh
+      shell: bash
       run: |
         rust_submodule_sha="$(git -C framework-system rev-parse HEAD)"
         echo "FRAMEWORK-SYSTEM_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
@@ -158,7 +158,7 @@ jobs:
         submodules: recursive
 
     - name: Capture Rust submodule revision
-      shell: pwsh
+      shell: bash
       run: |
         rust_submodule_sha="$(git -C framework-system rev-parse HEAD)"
         echo "FRAMEWORK-SYSTEM_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
