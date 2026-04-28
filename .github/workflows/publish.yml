@@ -13,7 +13,6 @@ env:
   DOTNET_VERSION: '10.0.x'
   ARTIFACT_OUTPUT: '${{ github.workspace }}/artifacts'
   NUGET_PACKAGES: '${{ github.workspace }}/.nuget/packages'
-  RUST_NATIVE_CACHE_VERSION: 'v2'
 
 jobs:
   build-native:
@@ -54,8 +53,8 @@ jobs:
       shell: bash
       run: |
         echo "RUST_SUBMODULE_SHA=$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
-        echo "RUST_NATIVE_CACHE_KEY=rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-${{ matrix.platform }}-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
-        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-${{ env.RUST_NATIVE_CACHE_VERSION }}-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+        echo "RUST_NATIVE_CACHE_KEY=rust-native-${{ matrix.platform }}-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
 
     - name: Check Rust native output cache
       id: rust-native-cache-lookup
@@ -154,7 +153,7 @@ jobs:
       shell: bash
       run: |
         echo "RUST_SUBMODULE_SHA=$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
-        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-${{ env.RUST_NATIVE_CACHE_VERSION }}-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
+        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$(git -C framework-system rev-parse HEAD)" >> "$GITHUB_ENV"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
@@ -181,7 +180,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/win-x64/framework_dotnet_ffi.dll
-        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-win-x64-${{ env.RUST_SUBMODULE_SHA }}
+        key: rust-native-win-x64-${{ env.RUST_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -189,7 +188,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/win-arm64/framework_dotnet_ffi.dll
-        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-win-arm64-${{ env.RUST_SUBMODULE_SHA }}
+        key: rust-native-win-arm64-${{ env.RUST_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -197,7 +196,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/linux-x64/libframework_dotnet_ffi.so
-        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-linux-x64-${{ env.RUST_SUBMODULE_SHA }}
+        key: rust-native-linux-x64-${{ env.RUST_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -205,7 +204,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/linux-arm64/libframework_dotnet_ffi.so
-        key: rust-native-${{ env.RUST_NATIVE_CACHE_VERSION }}-linux-arm64-${{ env.RUST_SUBMODULE_SHA }}
+        key: rust-native-linux-arm64-${{ env.RUST_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
