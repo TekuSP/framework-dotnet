@@ -102,15 +102,19 @@ jobs:
           - os: Windows
             runsOn: windows-latest
             platform: win-x64
+            nativeLibName: framework_dotnet_ffi.dll
           - os: Windows
             runsOn: windows-11-arm
             platform: win-arm64
+            nativeLibName: framework_dotnet_ffi.dll
           - os: Linux
             runsOn: ubuntu-latest
             platform: linux-x64
+            nativeLibName: libframework_dotnet_ffi.so
           - os: Linux
             runsOn: ubuntu-24.04-arm
             platform: linux-arm64
+            nativeLibName: libframework_dotnet_ffi.so
             
     runs-on: ${{ matrix.runsOn }}
     
@@ -153,6 +157,12 @@ jobs:
       with:
         name: framework-dotnet-native-linux-arm64
         path: artifacts/linux-arm64
+
+    - name: Copy platform native library to Rust output path
+      shell: bash
+      run: |
+        mkdir -p framework-system/target/release
+        cp "${{ github.workspace }}/artifacts/${{ matrix.platform }}/${{ matrix.nativeLibName }}" framework-system/target/release/
 
     - name: Restore dependencies for library
       run: dotnet restore -v normal -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
