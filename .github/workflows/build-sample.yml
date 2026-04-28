@@ -18,7 +18,7 @@ permissions:
 env:
   DOTNET_VERSION: '10.0.x'
   VERSION_PREFIX: '0.2'
-  NUGET_PACKAGES: '${{ github.workspace }}/.nuget/packages'
+  
 
 jobs:
   build-native:
@@ -31,115 +31,92 @@ jobs:
             runsOn: windows-latest
             platform: win-x64
             buildOutputPath: framework-system/target/release/framework_dotnet_ffi.dll
-            cachePath: artifacts/win-x64/framework_dotnet_ffi.dll
           - os: Windows
             runsOn: windows-11-arm
             platform: win-arm64
             buildOutputPath: framework-system/target/release/framework_dotnet_ffi.dll
-            cachePath: artifacts/win-arm64/framework_dotnet_ffi.dll
           - os: Linux
             runsOn: ubuntu-latest
             platform: linux-x64
             buildOutputPath: framework-system/target/release/libframework_dotnet_ffi.so
-            cachePath: artifacts/linux-x64/libframework_dotnet_ffi.so
           - os: Linux
             runsOn: ubuntu-24.04-arm
             platform: linux-arm64
             buildOutputPath: framework-system/target/release/libframework_dotnet_ffi.so
-            cachePath: artifacts/linux-arm64/libframework_dotnet_ffi.so
 
     runs-on: ${{ matrix.runsOn }}
-
+    env:
+      FRAMEWORK-SYSTEM_SUBMODULE_SHA:
+      
     steps:
     - uses: actions/checkout@v6
       with:
         submodules: recursive
 
     - name: Capture Rust submodule revision
-      shell: bash
+      shell: ps1
       run: |
         rust_submodule_sha="$(git -C framework-system rev-parse HEAD)"
-        rust_cache_scope="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-        rust_cache_scope="${rust_cache_scope//\//-}"
-        rust_cache_scope="${rust_cache_scope// /-}"
-        rust_cache_namespace="${GITHUB_WORKFLOW//\//-}"
-        rust_cache_namespace="${rust_cache_namespace// /-}"
-        echo "RUST_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_NATIVE_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-${{ matrix.platform }}-$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$rust_cache_namespace-$rust_cache_scope-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "FRAMEWORK-SYSTEM_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
 
     - name: Check Rust native output cache
       id: rust-native-cache-lookup
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v6
       with:
-        path: ${{ matrix.cachePath }}
-        key: ${{ env.RUST_NATIVE_CACHE_KEY }}
+        path: ${{ matrix.buildOutputPath }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-rust-native-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         lookup-only: true
         enableCrossOsArchive: true
 
     - name: Check Rust bindings cache
       if: matrix.platform == 'win-x64'
       id: rust-bindings-cache-lookup
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v6
       with:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        key: ${{ env.RUST_BINDINGS_CACHE_KEY }}
+        key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         lookup-only: true
         enableCrossOsArchive: true
 
-    - name: Decide whether Rust build can be skipped
-      shell: bash
-      run: |
-        if [[ "${{ steps.rust-native-cache-lookup.outputs.cache-hit }}" != "true" ]]; then
-          echo "RUST_BUILD_SKIPPED=false" >> "$GITHUB_ENV"
-        elif [[ "${{ matrix.platform }}" == "win-x64" && "${{ steps.rust-bindings-cache-lookup.outputs.cache-hit }}" != "true" ]]; then
-          echo "RUST_BUILD_SKIPPED=false" >> "$GITHUB_ENV"
-        else
-          echo "RUST_BUILD_SKIPPED=true" >> "$GITHUB_ENV"
-        fi
-
     - name: Setup Rust toolchain
-      if: env.RUST_BUILD_SKIPPED != 'true'
+      if: ${{ (steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true') }}
       run: rustup show
 
     - name: Cache Rust dependencies
-      if: env.RUST_BUILD_SKIPPED != 'true'
-      uses: Swatinem/rust-cache@v2
+      if: ${{ (steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true') }}
+      uses: actions/cache@v6
       with:
-        workspaces: |
-          framework-system -> target
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Install Linux Framework dependencies
-      if: runner.os == 'Linux' && env.RUST_BUILD_SKIPPED != 'true'
+      if: ${{(runner.os == 'Linux') && ((steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true')) }}
       run: |
         sudo apt-get update
         sudo apt-get install -y libudev-dev
 
     - name: Build native library
-      if: env.RUST_BUILD_SKIPPED != 'true'
+      if: ${{ (steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true') }}
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
 
-    - name: Stage native library for cache reuse
-      if: env.RUST_BUILD_SKIPPED != 'true'
-      shell: bash
-      run: |
-        mkdir -p "$(dirname "${{ matrix.cachePath }}")"
-        cp "${{ matrix.buildOutputPath }}" "${{ matrix.cachePath }}"
-
-    - name: Save native library cache
-      if: env.RUST_BUILD_SKIPPED != 'true'
-      uses: actions/cache/save@v4
+    - name: Save Rust native output cache
+      uses: actions/cache@v6
+      if: ${{ (steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true') }}
       with:
-        path: ${{ matrix.cachePath }}
-        key: ${{ env.RUST_NATIVE_CACHE_KEY }}
+        path: ${{ matrix.buildOutputPath }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-rust-native-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         enableCrossOsArchive: true
 
-    - name: Save generated bindings cache
-      if: matrix.platform == 'win-x64' && env.RUST_BUILD_SKIPPED != 'true'
-      uses: actions/cache/save@v4
+    - name: Save Rust bindings cache
+      if: ${{(matrix.platform == 'win-x64') && ((steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true')) }}
+      uses: actions/cache@v6
       with:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        key: ${{ env.RUST_BINDINGS_CACHE_KEY }}
+        key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         enableCrossOsArchive: true
 
     - name: "Cancel if failure"
@@ -172,38 +149,30 @@ jobs:
             platform: linux-arm64
             
     runs-on: ${{ matrix.runsOn }}
-    
+    env:
+      FRAMEWORK-SYSTEM_SUBMODULE_SHA:
+      
     steps:
     - uses: actions/checkout@v6
       with:
         submodules: recursive
 
     - name: Capture Rust submodule revision
-      shell: bash
+      shell: ps1
       run: |
         rust_submodule_sha="$(git -C framework-system rev-parse HEAD)"
-        rust_cache_scope="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
-        rust_cache_scope="${rust_cache_scope//\//-}"
-        rust_cache_scope="${rust_cache_scope// /-}"
-        rust_cache_namespace="${GITHUB_WORKFLOW//\//-}"
-        rust_cache_namespace="${rust_cache_namespace// /-}"
-        echo "RUST_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_BINDINGS_CACHE_KEY=rust-bindings-$rust_cache_namespace-$rust_cache_scope-$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_NATIVE_WIN_X64_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-win-x64-$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_NATIVE_WIN_ARM64_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-win-arm64-$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_NATIVE_LINUX_X64_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-linux-x64-$rust_submodule_sha" >> "$GITHUB_ENV"
-        echo "RUST_NATIVE_LINUX_ARM64_CACHE_KEY=rust-native-$rust_cache_namespace-$rust_cache_scope-linux-arm64-$rust_submodule_sha" >> "$GITHUB_ENV"
+        echo "FRAMEWORK-SYSTEM_SUBMODULE_SHA=$rust_submodule_sha" >> "$GITHUB_ENV"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
+    - uses: actions/cache@v6
+      name: Cache .NET dependencies
       with:
-        path: ${{ env.NUGET_PACKAGES }}
-        key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props', '**/*.targets', '**/*.sln', '**/*.slnx') }}
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
           ${{ runner.os }}-${{ runner.arch }}-nuget-
 
@@ -211,7 +180,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        key: ${{ env.RUST_BINDINGS_CACHE_KEY }}
+        key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -219,7 +188,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/win-x64/framework_dotnet_ffi.dll
-        key: ${{ env.RUST_NATIVE_WIN_X64_CACHE_KEY }}
+        key: Windows-X64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -227,7 +196,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/win-arm64/framework_dotnet_ffi.dll
-        key: ${{ env.RUST_NATIVE_WIN_ARM64_CACHE_KEY }}
+        key: Windows-ARM64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -235,7 +204,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/linux-x64/libframework_dotnet_ffi.so
-        key: ${{ env.RUST_NATIVE_LINUX_X64_CACHE_KEY }}
+        key: Linux-X64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -243,7 +212,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/linux-arm64/libframework_dotnet_ffi.so
-        key: ${{ env.RUST_NATIVE_LINUX_ARM64_CACHE_KEY }}
+        key: Linux-ARM64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
