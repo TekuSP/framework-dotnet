@@ -64,8 +64,9 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ${{ matrix.buildOutputPath }}
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-rust-native-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
-        lookup-only: true
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-rust-native-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-rust-native-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-
         enableCrossOsArchive: true
 
     - name: Check Rust bindings cache
@@ -74,8 +75,9 @@ jobs:
       uses: actions/cache@v5
       with:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
-        lookup-only: true
+        key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-${{ github.run_id }}
+        restore-keys: |
+          win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-
         enableCrossOsArchive: true
 
     - name: Setup Rust toolchain
@@ -91,7 +93,9 @@ jobs:
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ github.run_id }}
+        restore-keys: |
+         ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-cargo-${{ hashFiles('**/Cargo.lock') }}-
 
     - name: Install Linux Framework dependencies
       if: ${{(runner.os == 'Linux') && ((steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true')) }}
@@ -102,22 +106,6 @@ jobs:
     - name: Build native library
       if: ${{ (steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true') }}
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
-
-    - name: Save Rust native output cache
-      uses: actions/cache@v5
-      if: ${{ (steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true') }}
-      with:
-        path: ${{ matrix.buildOutputPath }}
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-rust-native-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
-        enableCrossOsArchive: true
-
-    - name: Save Rust bindings cache
-      if: ${{(matrix.platform == 'win-x64') && ((steps.rust-native-cache-lookup.outputs.cache-hit != 'true') || (steps.rust-bindings-cache-lookup.outputs.cache-hit != 'true')) }}
-      uses: actions/cache@v5
-      with:
-        path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
-        enableCrossOsArchive: true
 
     - name: "Cancel if failure"
       if: ${{ failure() }}
@@ -172,23 +160,27 @@ jobs:
       name: Cache .NET dependencies
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-nuget-${{ hashFiles('**/packages.lock.json') }}-${{ github.run_id }}
         restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-nuget-
+          ${{ runner.os }}-${{ runner.arch }}-${{ github.ref_name }}-nuget-${{ hashFiles('**/packages.lock.json') }}-
 
     - name: Restore generated bindings cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v5
       with:
         path: framework-system/framework_dotnet_ffi/csharp/NativeMethods.g.cs
-        key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
+        key: win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-${{ github.run_id }}
+        restore-keys: |
+          win-x64-rust-bindings-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
     - name: Restore win-x64 native cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v5
       with:
         path: artifacts/win-x64/framework_dotnet_ffi.dll
-        key: Windows-X64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
+        key: Windows-X64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-${{ github.run_id }}
+        restore-keys: |
+          Windows-X64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -196,7 +188,9 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/win-arm64/framework_dotnet_ffi.dll
-        key: Windows-ARM64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
+        key: Windows-ARM64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-${{ github.run_id }}
+        restore-keys: |
+          Windows-ARM64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -204,7 +198,9 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/linux-x64/libframework_dotnet_ffi.so
-        key: Linux-X64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
+        key: Linux-X64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-${{ github.run_id }}
+        restore-keys: |
+          Linux-X64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
@@ -212,7 +208,9 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         path: artifacts/linux-arm64/libframework_dotnet_ffi.so
-        key: Linux-ARM64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}
+        key: Linux-ARM64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-${{ github.run_id }}
+        restore-keys: |
+          Linux-ARM64-rust-native-${{ github.ref_name }}-${{ env.FRAMEWORK-SYSTEM_SUBMODULE_SHA }}-
         fail-on-cache-miss: true
         enableCrossOsArchive: true
 
