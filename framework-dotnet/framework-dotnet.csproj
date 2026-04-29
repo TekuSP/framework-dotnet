@@ -13,7 +13,7 @@
   <PropertyGroup>
     <PackageId>FrameworkDotnet</PackageId>
     <Title>FrameworkDotnet</Title>
-    <Version>0.2.0</Version>
+    <Version>0.2.1</Version>
     <Authors>Richard "TekuSP" Torhan</Authors>
     <Description>Managed .NET bindings for Framework embedded controller, platform, power, fan, and thermal APIs backed by the framework-system Rust native layer.</Description>
     <PackageTags>Framework;EmbeddedController;Hardware;Interop;Telemetry;FanControl;Power;Thermal</PackageTags>
