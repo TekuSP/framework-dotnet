@@ -44,20 +44,18 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup Rust toolchain
-      run: rustup show
-
-    - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+    - name: Setup Rust with Cache
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        workspaces: |
+        cache-workspaces: |
           framework-system -> target
 
-    - name: Install Linux Framework dependencies
+    - name: Install with Cache Linux Framework dependencies (libudev-dev)
+      uses: awalsh128/cache-apt-pkgs-action@v1
       if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libudev-dev
+      with:
+        packages: libudev-dev
+        version: ${{ runner.os }}-${{ runner.arch }}
 
     - name: Build native library
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
@@ -95,6 +93,23 @@ jobs:
     - uses: actions/checkout@v6
       with:
         submodules: recursive
+        
+    - name: Set version environment variable
+      run: |
+        $tagName = "${{ github.event.release.tag_name }}"
+        # Check if the tag starts with 'v' and remove it
+        if ($tagName.StartsWith("v")) {
+            $version = $tagName.Substring(1)
+        } else {
+            $version = $tagName
+        }
+          
+        Write-Host "The original tag name was: $tagName"
+        Write-Host "The processed version is: $version"
+          
+        # Set the environment variable for subsequent steps in the same job
+        echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      shell: pwsh # Explicitly use PowerShell Core (default on windows-latest for 'run')
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
@@ -131,25 +146,16 @@ jobs:
         name: framework-dotnet-native-linux-arm64
         path: artifacts/linux-arm64
 
-    - name: Set version environment variable
-      run: |
-        $tagName = "${{ github.event.release.tag_name }}"
-        # Check if the tag starts with 'v' and remove it
-        if ($tagName.StartsWith("v")) {
-            $version = $tagName.Substring(1)
-        } else {
-            $version = $tagName
-        }
-          
-        Write-Host "The original tag name was: $tagName"
-        Write-Host "The processed version is: $version"
-          
-        # Set the environment variable for subsequent steps in the same job
-        echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-      shell: pwsh # Explicitly use PowerShell Core (default on windows-latest for 'run')
+    - name: Cache and restore nugets
+      uses: actions/cache@v5
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-nuget-
 
     - name: Restore dependencies
-      run: dotnet restore -v normal -p:Version=${{ env.version }} -p:InformationalVersion=${{ env.version }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+      run: dotnet restore -v normal --locked-mode -p:Version=${{ env.version }} -p:InformationalVersion=${{ env.version }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
     - name: Build
       run: >-
@@ -193,9 +199,51 @@ jobs:
         name: framework-dotnet-nuget
         path: ${{ env.ARTIFACT_OUTPUT }}
         if-no-files-found: error
+        
     - name: Push nugets to Github
       run: |
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source "GitHub"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -NoSymbols -SkipDuplicate -ApiKey ${{ secrets.NUGET_KEY }}
+  
+  clean-up:
+    name: Cleans up artifacts
+    needs: pack
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    
+    steps:
+    - name: Deletes generated bindings artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-bindings
+        failOnError: false
 
+    - name: Deletes win-x64 native artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-native-win-x64
+        failOnError: false
+
+    - name: Deletes win-arm64 native artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-native-win-arm64
+        failOnError: false
+
+    - name: Deletes linux-x64 native artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-native-linux-x64
+        failOnError: false
+
+    - name: Deletes linux-arm64 native artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-native-linux-arm64
+        failOnError: false
