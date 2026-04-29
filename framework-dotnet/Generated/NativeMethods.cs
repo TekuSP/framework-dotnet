@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -10,7 +10,7 @@ namespace Framework.System.Interop;
 [GroupedNativeMethods(removePrefix: "framework_", removeSuffix: "_handle")]
 internal static unsafe partial class NativeMethods
 {
-    private const string DllName = "framework_dotnet_ffi";
+    private const string DllName = "framework_lib_ffi";
 
     static NativeMethods()
     {

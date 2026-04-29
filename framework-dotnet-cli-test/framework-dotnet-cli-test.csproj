@@ -7,8 +7,8 @@
     <RootNamespace>framework_dotnet_cli_test</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <FrameworkDotnetNativeLibraryName Condition="'$(OS)' == 'Windows_NT'">framework_dotnet_ffi.dll</FrameworkDotnetNativeLibraryName>
-    <FrameworkDotnetNativeLibraryName Condition="'$(OS)' != 'Windows_NT'">libframework_dotnet_ffi.so</FrameworkDotnetNativeLibraryName>
+    <FrameworkDotnetNativeLibraryName Condition="'$(OS)' == 'Windows_NT'">framework_lib_ffi.dll</FrameworkDotnetNativeLibraryName>
+    <FrameworkDotnetNativeLibraryName Condition="'$(OS)' != 'Windows_NT'">libframework_lib_ffi.so</FrameworkDotnetNativeLibraryName>
   </PropertyGroup>
 
   <ItemGroup>

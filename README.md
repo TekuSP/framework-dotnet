@@ -19,7 +19,7 @@ The public API keeps the native fixed-slot snapshot shape from Rust for consiste
 
 The project uses:
 
-- the `framework-system` Rust submodule for the native hardware access layer
+- the `framework-system-ffi-extensions` Rust repository for the native .NET FFI layer, with the upstream `framework-system` repository nested inside it as a submodule for the hardware access layer
 - `csbindgen` to generate the low-level C# interop bindings
 - `UnitsNet` for public unit-bearing values such as temperature, fan speed, voltage, current, charge, and ratio values
 - a hand-written `FrameworkDotnet` API surface on top of those bindings so normal .NET callers do not need to work with pointers or unsafe code
@@ -232,7 +232,7 @@ Add the package reference to your project:
 
 ## Building from source
 
-The repository normally builds the Rust submodule before compiling the managed library.
+The repository normally builds the `framework-system-ffi-extensions` Rust repository before compiling the managed library.
 
 Typical source build:
 
@@ -250,13 +250,13 @@ dotnet build framework-dotnet/framework-dotnet.csproj /p:SkipRustBuild=true
 
 ### Windows
 
-- The managed library expects the native `framework_dotnet_ffi.dll` asset to be available beside the application or in the packaged runtime-specific native layout.
+- The managed library expects the native `framework_lib_ffi.dll` asset to be available beside the application or in the packaged runtime-specific native layout.
 - Embedded controller access depends on the selected native driver, the permissions available on the host system, and the installed BIOS and firmware versions on the target machine.
 - Driver support can vary by machine and configuration, so `IsDriverSupported(...)` should be treated as a runtime check.
 
 ### Linux
 
-- The managed library expects the native `libframework_dotnet_ffi.so` asset to be available beside the application or in the packaged runtime-specific native layout.
+- The managed library expects the native `libframework_lib_ffi.so` asset to be available beside the application or in the packaged runtime-specific native layout.
 - Embedded controller access depends on kernel support, available native driver support, device permissions, and the installed BIOS and firmware versions on the target machine.
 - On Linux, successful native loading alone does not guarantee that EC operations will succeed; permissions and supported driver availability still matter.
 

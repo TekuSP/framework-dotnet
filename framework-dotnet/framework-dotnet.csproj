@@ -28,18 +28,19 @@
 
   <PropertyGroup>
     <SkipRustBuild Condition="'$(SkipRustBuild)' == ''">false</SkipRustBuild>
-    <RustProjectDir>$(MSBuildProjectDirectory)\..\framework-system\</RustProjectDir>
-    <RustBindingsFile>$(RustProjectDir)\framework_dotnet_ffi\csharp\NativeMethods.g.cs</RustBindingsFile>
+    <RustProjectDir>$(MSBuildProjectDirectory)\..\framework-system-ffi-extensions\</RustProjectDir>
+    <RustSubmoduleProjectDir>$(RustProjectDir)\framework-system\</RustSubmoduleProjectDir>
+    <RustBindingsFile>$(RustProjectDir)\csharp\NativeMethods.g.cs</RustBindingsFile>
     <RustNativeOutputDir>$(RustProjectDir)\target\release</RustNativeOutputDir>
   </PropertyGroup>
 
   <PropertyGroup>
-    <RustNativeLibraryName Condition="'$(OS)' == 'Windows_NT'">framework_dotnet_ffi.dll</RustNativeLibraryName>
-    <RustNativeLibraryName Condition="'$(OS)' != 'Windows_NT'">libframework_dotnet_ffi.so</RustNativeLibraryName>
-    <FrameworkDotnetWindowsNativeLibraryPath Condition="'$(FrameworkDotnetWindowsNativeLibraryPath)' == ''">$(RustProjectDir)\target\release\framework_dotnet_ffi.dll</FrameworkDotnetWindowsNativeLibraryPath>
-    <FrameworkDotnetWindowsArm64NativeLibraryPath Condition="'$(FrameworkDotnetWindowsArm64NativeLibraryPath)' == ''">$(RustProjectDir)\target\aarch64-pc-windows-msvc\release\framework_dotnet_ffi.dll</FrameworkDotnetWindowsArm64NativeLibraryPath>
-    <FrameworkDotnetLinuxNativeLibraryPath Condition="'$(FrameworkDotnetLinuxNativeLibraryPath)' == ''">$(RustProjectDir)\target\x86_64-unknown-linux-gnu\release\libframework_dotnet_ffi.so</FrameworkDotnetLinuxNativeLibraryPath>
-    <FrameworkDotnetLinuxArm64NativeLibraryPath Condition="'$(FrameworkDotnetLinuxArm64NativeLibraryPath)' == ''">$(RustProjectDir)\target\aarch64-unknown-linux-gnu\release\libframework_dotnet_ffi.so</FrameworkDotnetLinuxArm64NativeLibraryPath>
+    <RustNativeLibraryName Condition="'$(OS)' == 'Windows_NT'">framework_lib_ffi.dll</RustNativeLibraryName>
+    <RustNativeLibraryName Condition="'$(OS)' != 'Windows_NT'">libframework_lib_ffi.so</RustNativeLibraryName>
+    <FrameworkDotnetWindowsNativeLibraryPath Condition="'$(FrameworkDotnetWindowsNativeLibraryPath)' == ''">$(RustProjectDir)\target\release\framework_lib_ffi.dll</FrameworkDotnetWindowsNativeLibraryPath>
+    <FrameworkDotnetWindowsArm64NativeLibraryPath Condition="'$(FrameworkDotnetWindowsArm64NativeLibraryPath)' == ''">$(RustProjectDir)\target\aarch64-pc-windows-msvc\release\framework_lib_ffi.dll</FrameworkDotnetWindowsArm64NativeLibraryPath>
+    <FrameworkDotnetLinuxNativeLibraryPath Condition="'$(FrameworkDotnetLinuxNativeLibraryPath)' == ''">$(RustProjectDir)\target\x86_64-unknown-linux-gnu\release\libframework_lib_ffi.so</FrameworkDotnetLinuxNativeLibraryPath>
+    <FrameworkDotnetLinuxArm64NativeLibraryPath Condition="'$(FrameworkDotnetLinuxArm64NativeLibraryPath)' == ''">$(RustProjectDir)\target\aarch64-unknown-linux-gnu\release\libframework_lib_ffi.so</FrameworkDotnetLinuxArm64NativeLibraryPath>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -72,12 +73,23 @@
   </ItemGroup>
 
   <Target Name="EnsureRustSubmodule" BeforeTargets="Build" Condition="'$(SkipRustBuild)' != 'true' and !Exists('$(RustProjectDir)\Cargo.toml')">
-    <Error Text="Rust submodule not found at $(RustProjectDir). Run: git submodule update --init --recursive or build with /p:SkipRustBuild=true when generated bindings and native assets are supplied externally." />
+    <Error Text="Rust FFI repository not found at $(RustProjectDir). Run: git submodule update --init --recursive or build with /p:SkipRustBuild=true when generated bindings and native assets are supplied externally." />
+  </Target>
+
+  <Target Name="EnsureRustSubmoduleProject" BeforeTargets="Build" Condition="'$(SkipRustBuild)' != 'true' and !Exists('$(RustSubmoduleProjectDir)\Cargo.toml')">
+    <Error Text="Nested framework-system Rust submodule not found at $(RustSubmoduleProjectDir). Run: git submodule update --init --recursive or build with /p:SkipRustBuild=true when generated bindings and native assets are supplied externally." />
   </Target>
 
   <Target Name="BuildRustSubmodule" BeforeTargets="BeforeBuild" Condition="'$(SkipRustBuild)' != 'true' and Exists('$(RustProjectDir)\Cargo.toml')">
     <Message Text="Building Rust project at $(RustProjectDir)" Importance="high" />
-    <Exec Command="cargo build --manifest-path &quot;$(RustProjectDir)\Cargo.toml&quot; -p framework_dotnet_ffi --release" />
+    <Exec Command="cargo build --manifest-path &quot;$(RustSubmoduleProjectDir)\Cargo.toml&quot; -p framework_lib --release" />
+    <Exec Command="cargo build --manifest-path &quot;$(RustProjectDir)\Cargo.toml&quot; -p framework_lib_ffi --release" />
+  </Target>
+
+  <Target Name="CleanRustSubmodule" AfterTargets="Clean" Condition="'$(IsCrossTargetingBuild)' != 'true'">
+    <Message Text="Cleaning Rust project at $(RustProjectDir)" Importance="high" Condition="Exists('$(RustProjectDir)\target') or Exists('$(RustSubmoduleProjectDir)\target')" />
+    <RemoveDir Directories="$(RustProjectDir)\target" Condition="Exists('$(RustProjectDir)\target')" />
+    <RemoveDir Directories="$(RustSubmoduleProjectDir)\target" Condition="Exists('$(RustSubmoduleProjectDir)\target')" />
   </Target>
 
   <Target Name="EnsureGeneratedBindings" BeforeTargets="CoreCompile" Condition="!Exists('$(RustBindingsFile)')">
@@ -114,10 +126,10 @@
   </Target>
 
   <Target Name="WarnIfPackNativeAssetsMissing" BeforeTargets="GenerateNuspec">
-    <Warning Condition="!Exists('$(FrameworkDotnetWindowsNativeLibraryPath)')" Text="Windows native asset not found at $(FrameworkDotnetWindowsNativeLibraryPath). The NuGet package will not contain runtimes/win-x64/native/framework_dotnet_ffi.dll." />
-    <Warning Condition="!Exists('$(FrameworkDotnetWindowsArm64NativeLibraryPath)')" Text="Windows ARM64 native asset not found at $(FrameworkDotnetWindowsArm64NativeLibraryPath). Build the Rust library for aarch64-pc-windows-msvc or set FrameworkDotnetWindowsArm64NativeLibraryPath before packing if you want runtimes/win-arm64/native/framework_dotnet_ffi.dll included." />
-    <Warning Condition="!Exists('$(FrameworkDotnetLinuxNativeLibraryPath)')" Text="Linux native asset not found at $(FrameworkDotnetLinuxNativeLibraryPath). Build the Rust library for x86_64-unknown-linux-gnu or set FrameworkDotnetLinuxNativeLibraryPath before packing if you want runtimes/linux-x64/native/libframework_dotnet_ffi.so included." />
-    <Warning Condition="!Exists('$(FrameworkDotnetLinuxArm64NativeLibraryPath)')" Text="Linux ARM64 native asset not found at $(FrameworkDotnetLinuxArm64NativeLibraryPath). Build the Rust library for aarch64-unknown-linux-gnu or set FrameworkDotnetLinuxArm64NativeLibraryPath before packing if you want runtimes/linux-arm64/native/libframework_dotnet_ffi.so included." />
+    <Warning Condition="!Exists('$(FrameworkDotnetWindowsNativeLibraryPath)')" Text="Windows native asset not found at $(FrameworkDotnetWindowsNativeLibraryPath). The NuGet package will not contain runtimes/win-x64/native/framework_lib_ffi.dll." />
+    <Warning Condition="!Exists('$(FrameworkDotnetWindowsArm64NativeLibraryPath)')" Text="Windows ARM64 native asset not found at $(FrameworkDotnetWindowsArm64NativeLibraryPath). Build the Rust library for aarch64-pc-windows-msvc or set FrameworkDotnetWindowsArm64NativeLibraryPath before packing if you want runtimes/win-arm64/native/framework_lib_ffi.dll included." />
+    <Warning Condition="!Exists('$(FrameworkDotnetLinuxNativeLibraryPath)')" Text="Linux native asset not found at $(FrameworkDotnetLinuxNativeLibraryPath). Build the Rust library for x86_64-unknown-linux-gnu or set FrameworkDotnetLinuxNativeLibraryPath before packing if you want runtimes/linux-x64/native/libframework_lib_ffi.so included." />
+    <Warning Condition="!Exists('$(FrameworkDotnetLinuxArm64NativeLibraryPath)')" Text="Linux ARM64 native asset not found at $(FrameworkDotnetLinuxArm64NativeLibraryPath). Build the Rust library for aarch64-unknown-linux-gnu or set FrameworkDotnetLinuxArm64NativeLibraryPath before packing if you want runtimes/linux-arm64/native/libframework_lib_ffi.so included." />
   </Target>
 
 </Project>
