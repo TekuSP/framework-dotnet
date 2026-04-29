@@ -50,20 +50,17 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup Rust toolchain
-      run: rustup show
-
-    - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+    - name: Setup Rust with Cache
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        workspaces: |
+        cache-workspaces: |
           framework-system -> target
 
-    - name: Install Linux Framework dependencies
+    - name: Install with Cache Linux Framework dependencies (libudev-dev)
+      uses: daaku/gh-action-apt-install@v4
       if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libudev-dev
+      with:
+        packages: libudev-dev
 
     - name: Build native library
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
@@ -154,8 +151,16 @@ jobs:
         name: framework-dotnet-native-linux-arm64
         path: artifacts/linux-arm64
 
+    - name: Cache and restore nugets
+      uses: actions/cache@v5
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-nuget-
+
     - name: Restore dependencies for library
-      run: dotnet restore -v normal -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+      run: dotnet restore -v normal --locked-mode -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
     - name: Restore dependencies for sample app
       run: dotnet restore framework-dotnet-cli-test/framework-dotnet-cli-test.csproj -v normal -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
@@ -212,4 +217,46 @@ jobs:
         path: ${{ github.workspace }}/artifacts/sample-app/${{ matrix.platform }}
         if-no-files-found: error
         retention-days: 90
+
+  clean-up:
+    name: Cleans up artifacts
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    
+    steps:
+    - name: Deletes generated bindings artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-bindings
+        failOnError: false
+
+    - name: Deletes win-x64 native artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-native-win-x64
+        failOnError: false
+
+    - name: Deletes win-arm64 native artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-native-win-arm64
+        failOnError: false
+
+    - name: Deletes linux-x64 native artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-native-linux-x64
+        failOnError: false
+
+    - name: Deletes linux-arm64 native artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-native-linux-arm64
+        failOnError: false
 
