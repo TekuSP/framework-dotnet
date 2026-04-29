@@ -150,9 +150,9 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-nuget-
+          ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-
 
     - name: Restore dependencies
       run: dotnet restore -v normal --locked-mode -p:Version=${{ env.version }} -p:InformationalVersion=${{ env.version }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
