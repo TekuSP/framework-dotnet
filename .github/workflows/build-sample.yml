@@ -57,10 +57,11 @@ jobs:
           framework-system -> target
 
     - name: Install with Cache Linux Framework dependencies (libudev-dev)
-      uses: daaku/gh-action-apt-install@v4
+      uses: awalsh128/cache-apt-pkgs-action@v1
       if: runner.os == 'Linux'
       with:
         packages: libudev-dev
+        version: ${{ runner.os }}-${{ runner.arch }}
 
     - name: Build native library
       run: cargo build --manifest-path framework-system/Cargo.toml -p framework_dotnet_ffi --release
