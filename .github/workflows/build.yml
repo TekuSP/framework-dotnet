@@ -145,7 +145,7 @@ jobs:
           ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-
 
     - name: Restore dependencies
-      run: dotnet restore -v normal --locked-mode -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+      run: dotnet restore -v normal --locked-mode -p:Version=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
     - name: Build
       run: >-
@@ -153,8 +153,8 @@ jobs:
         -v normal
         --configuration Release
         --no-restore
-        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
-        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:Version=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}
+        -p:InformationalVersion=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
@@ -172,8 +172,8 @@ jobs:
         --no-restore
         --no-build
         --output ${{ env.ARTIFACT_OUTPUT }}
-        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
-        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:Version=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}
+        -p:InformationalVersion=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
@@ -190,6 +190,7 @@ jobs:
         path: ${{ env.ARTIFACT_OUTPUT }}
         if-no-files-found: error
     - name: Push nugets to Github
+      if: github.event_name != 'pull_request'
       run: |
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source "GitHub"

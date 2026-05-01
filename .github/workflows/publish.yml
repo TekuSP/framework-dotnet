@@ -6,7 +6,7 @@ on:
 
 permissions:
   packages: write
-  contents: read
+  contents: write
   actions: write
 
 env:
@@ -199,16 +199,185 @@ jobs:
         name: framework-dotnet-nuget
         path: ${{ env.ARTIFACT_OUTPUT }}
         if-no-files-found: error
-        
+
+    - name: Attach release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ${{ env.ARTIFACT_OUTPUT }}/*.nupkg
+          ${{ env.ARTIFACT_OUTPUT }}/*.snupkg
+        fail_on_unmatched_files: false
+
     - name: Push nugets to Github
       run: |
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source "GitHub"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source https://api.nuget.org/v3/index.json -NoSymbols -SkipDuplicate -ApiKey ${{ secrets.NUGET_KEY }}
+
+  sample-app:
+    name: Package sample app (${{ matrix.os }} ${{ matrix.platform }})
+    needs: build-native
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: Windows
+            runsOn: windows-latest
+            platform: win-x64
+          - os: Windows
+            runsOn: windows-11-arm
+            platform: win-arm64
+          - os: Linux
+            runsOn: ubuntu-latest
+            platform: linux-x64
+          - os: Linux
+            runsOn: ubuntu-24.04-arm
+            platform: linux-arm64
+
+    runs-on: ${{ matrix.runsOn }}
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Set version environment variable
+      run: |
+        $tagName = "${{ github.event.release.tag_name }}"
+        if ($tagName.StartsWith("v")) {
+            $version = $tagName.Substring(1)
+        } else {
+            $version = $tagName
+        }
+
+        Write-Host "The original tag name was: $tagName"
+        Write-Host "The processed version is: $version"
+        echo "version=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      shell: pwsh
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Download generated bindings artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-bindings
+        path: framework-system-ffi-extensions/csharp
+
+    - name: Download win-x64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-win-x64
+        path: artifacts/win-x64
+
+    - name: Download win-arm64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-win-arm64
+        path: artifacts/win-arm64
+
+    - name: Download linux-x64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-linux-x64
+        path: artifacts/linux-x64
+
+    - name: Download linux-arm64 native artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: framework-dotnet-native-linux-arm64
+        path: artifacts/linux-arm64
+
+    - name: Cache and restore nugets
+      uses: actions/cache@v5
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-
+
+    - name: Restore dependencies for library
+      run: dotnet restore -v normal --locked-mode -p:Version=${{ env.version }} -p:InformationalVersion=${{ env.version }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+
+    - name: Restore dependencies for sample app
+      run: dotnet restore framework-dotnet-cli-test/framework-dotnet-cli-test.csproj -v normal -p:Version=${{ env.version }} -p:InformationalVersion=${{ env.version }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+
+    - name: Build library
+      run: >-
+        dotnet build framework-dotnet/framework-dotnet.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        -p:Version=${{ env.version }}
+        -p:InformationalVersion=${{ env.version }}+${{ github.sha }}
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
+        -p:SkipRustBuild=true
+        -p:FrameworkDotnetWindowsNativeLibraryPath=${{ github.workspace }}/artifacts/win-x64/framework_lib_ffi.dll
+        -p:FrameworkDotnetWindowsArm64NativeLibraryPath=${{ github.workspace }}/artifacts/win-arm64/framework_lib_ffi.dll
+        -p:FrameworkDotnetLinuxNativeLibraryPath=${{ github.workspace }}/artifacts/linux-x64/libframework_lib_ffi.so
+        -p:FrameworkDotnetLinuxArm64NativeLibraryPath=${{ github.workspace }}/artifacts/linux-arm64/libframework_lib_ffi.so
+
+    - name: Build sample app
+      run: >-
+        dotnet build framework-dotnet-cli-test/framework-dotnet-cli-test.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        -p:Version=${{ env.version }}
+        -p:InformationalVersion=${{ env.version }}+${{ github.sha }}
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
+        -p:SkipRustBuild=true
+
+    - name: Publish sample app
+      run: >-
+        dotnet publish framework-dotnet-cli-test/framework-dotnet-cli-test.csproj
+        -v normal
+        --configuration Release
+        --no-restore
+        --no-build
+        --output ${{ github.workspace }}/artifacts/sample-app/${{ matrix.platform }}
+        -p:Version=${{ env.version }}
+        -p:InformationalVersion=${{ env.version }}+${{ github.sha }}
+        -p:DebugSymbols=true
+        -p:DebugType=portable
+        -p:ContinuousIntegrationBuild=true
+        -p:SkipRustBuild=true
+
+    - name: Archive sample app
+      run: |
+        $sampleAppPath = "${{ github.workspace }}/artifacts/sample-app/${{ matrix.platform }}"
+        $archivePath = "${{ env.ARTIFACT_OUTPUT }}/framework-dotnet-sample-app-${{ matrix.platform }}.zip"
+
+        if (Test-Path $archivePath) {
+            Remove-Item $archivePath -Force
+        }
+
+        Compress-Archive -Path "$sampleAppPath/*" -DestinationPath $archivePath
+      shell: pwsh
+
+    - name: Upload sample app artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: framework-dotnet-sample-app-${{ matrix.platform }}
+        path: ${{ env.ARTIFACT_OUTPUT }}/framework-dotnet-sample-app-${{ matrix.platform }}.zip
+        if-no-files-found: error
+
+    - name: Attach sample app release asset
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ${{ env.ARTIFACT_OUTPUT }}/framework-dotnet-sample-app-${{ matrix.platform }}.zip
   
   clean-up:
     name: Cleans up artifacts
-    needs: pack
+    needs:
+      - pack
+      - sample-app
     runs-on: ubuntu-latest
     if: ${{ always() }}
     
@@ -246,4 +415,39 @@ jobs:
       if: ${{ always() }}
       with:
         name: framework-dotnet-native-linux-arm64
+        failOnError: false
+
+    - name: Deletes NuGet package artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-nuget
+        failOnError: false
+
+    - name: Deletes win-x64 sample app artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-sample-app-win-x64
+        failOnError: false
+
+    - name: Deletes win-arm64 sample app artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-sample-app-win-arm64
+        failOnError: false
+
+    - name: Deletes linux-x64 sample app artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-sample-app-linux-x64
+        failOnError: false
+
+    - name: Deletes linux-arm64 sample app artifact
+      uses: geekyeggo/delete-artifact@v6
+      if: ${{ always() }}
+      with:
+        name: framework-dotnet-sample-app-linux-arm64
         failOnError: false
