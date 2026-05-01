@@ -5,8 +5,7 @@ pull_request_rules:
       - "#commits-behind = 0"
     actions:
       merge:
-        method: merge
-        merge_method: squash
+        method: squash
         commit_message_template: |
           Automerge from {{ head }}
 
@@ -25,8 +24,7 @@ pull_request_rules:
       - "#commits-behind = 0"
     actions:
       merge:
-        method: merge
-        merge_method: squash
+        method: squash
         commit_message_template: |
           Automerge from {{ head }}
 
