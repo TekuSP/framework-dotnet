@@ -6,6 +6,7 @@ pull_request_rules:
     actions:
       merge:
         method: merge
+        merge_method: squash
         commit_message_template: |
           Automerge from {{ head }}
 
@@ -25,6 +26,7 @@ pull_request_rules:
     actions:
       merge:
         method: merge
+        merge_method: squash
         commit_message_template: |
           Automerge from {{ head }}
 
