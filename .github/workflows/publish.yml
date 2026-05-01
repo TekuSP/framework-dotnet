@@ -367,7 +367,6 @@ jobs:
         name: framework-dotnet-sample-app-${{ matrix.platform }}
         path: ${{ env.ARTIFACT_OUTPUT }}/framework-dotnet-sample-app-${{ matrix.platform }}.zip
         if-no-files-found: error
-        retention-days: 90
 
     - name: Attach sample app release asset
       uses: softprops/action-gh-release@v2
