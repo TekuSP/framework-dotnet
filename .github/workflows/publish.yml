@@ -6,7 +6,7 @@ on:
 
 permissions:
   packages: write
-  contents: read
+  contents: write
   actions: write
 
 env:
@@ -199,7 +199,15 @@ jobs:
         name: framework-dotnet-nuget
         path: ${{ env.ARTIFACT_OUTPUT }}
         if-no-files-found: error
-        
+
+    - name: Attach release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ${{ env.ARTIFACT_OUTPUT }}/*.nupkg
+          ${{ env.ARTIFACT_OUTPUT }}/*.snupkg
+        fail_on_unmatched_files: false
+         
     - name: Push nugets to Github
       run: |
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
