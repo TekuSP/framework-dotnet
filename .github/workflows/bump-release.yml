@@ -18,8 +18,16 @@ jobs:
   bump-release:
     name: Bump release version
     runs-on: ubuntu-latest
-
+    
     steps:
+    - name: Verify input version
+      uses: madhead/semver-utils@latest
+      if: ${{ inputs.version != '' }}
+      with:
+        version: ${{ inputs.version }}
+        lenient: false
+      continue-on-error: false
+
     - uses: actions/checkout@v6
       with:
         ref: master
