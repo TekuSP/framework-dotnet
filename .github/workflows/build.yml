@@ -190,7 +190,7 @@ jobs:
         path: ${{ env.ARTIFACT_OUTPUT }}
         if-no-files-found: error
     - name: Push nugets to Github
-      if: github.event_name != 'pull_request'
+      if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/Release/') }}
       run: |
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source "GitHub"
