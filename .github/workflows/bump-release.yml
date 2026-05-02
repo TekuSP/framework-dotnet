@@ -24,14 +24,6 @@ jobs:
       with:
         ref: master
 
-    - name: Read current project version
-      id: current-version
-      uses: vers-one/dotnet-project-version-updater@v1.8
-      with:
-        file: framework-dotnet/framework-dotnet.csproj
-        version: '?.?.?.?'
-        tags: csproj.Version
-
     - name: Bump project version
       id: bump-version
       uses: vers-one/dotnet-project-version-updater@v1.8
@@ -49,18 +41,6 @@ jobs:
         file: framework-dotnet/framework-dotnet.csproj
         version: ${{ inputs.version }}
         tags: csproj.Version
-
-    - name: Sync workflow version prefixes
-      shell: bash
-      env:
-        CURRENT_VERSION: ${{ steps.current-version.outputs.oldVersion }}
-        TARGET_VERSION: ${{ steps.bump-version.outputs.newVersion || steps.set-version.outputs.newVersion }}
-      run: |
-        for path in .github/workflows/build.yml .github/workflows/build-sample.yml; do
-          grep -q "VERSION_PREFIX: '$CURRENT_VERSION'" "$path"
-          sed -i "s/VERSION_PREFIX: '$CURRENT_VERSION'/VERSION_PREFIX: '$TARGET_VERSION'/" "$path"
-          grep -q "VERSION_PREFIX: '$TARGET_VERSION'" "$path"
-        done
 
     - name: Create version update pull request
       uses: peter-evans/create-pull-request@v8.1.1
