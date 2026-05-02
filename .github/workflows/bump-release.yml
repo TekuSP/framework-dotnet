@@ -38,7 +38,7 @@ jobs:
       if: ${{ inputs.version == '' }}
       with:
         file: framework-dotnet/framework-dotnet.csproj
-        version: bump-minor
+        version: '*.^.0'
         tags: csproj.Version
 
     - name: Set project version
