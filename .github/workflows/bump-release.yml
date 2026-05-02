@@ -1,0 +1,112 @@
+name: Bump release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional semantic version to set before opening the PR
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-release:
+    name: Bump release version
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Determine base branch
+      id: base-branch
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          base_branch="${{ github.event.release.target_commitish }}"
+        else
+          base_branch="${{ github.ref_name }}"
+        fi
+
+        if [ -z "$base_branch" ]; then
+          echo "Unable to determine the base branch for the version update PR." >&2
+          exit 1
+        fi
+
+        echo "value=$base_branch" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ steps.base-branch.outputs.value }}
+
+    - name: Determine target version
+      id: target-version
+      shell: bash
+      env:
+        VERSION_INPUT: ${{ inputs.version }}
+      run: |
+        if [ -n "$VERSION_INPUT" ]; then
+          if [[ ! "$VERSION_INPUT" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Provided version must be a semantic version such as 1.2.3 or 1.2.3-beta.1." >&2
+            exit 1
+          fi
+
+          echo "value=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+        else
+          echo "value=bump-build" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Update project version
+      id: update-version
+      uses: vers-one/dotnet-project-version-updater@v1.8
+      with:
+        file: framework-dotnet/framework-dotnet.csproj
+        version: ${{ steps.target-version.outputs.value }}
+        tags: csproj.Version
+
+    - name: Sync workflow version prefixes
+      shell: bash
+      env:
+        NEW_VERSION: ${{ steps.update-version.outputs.newVersion }}
+      run: |
+        python <<'PY'
+        from pathlib import Path
+        import os
+        import re
+
+        version = os.environ["NEW_VERSION"]
+        paths = [
+            Path(".github/workflows/build.yml"),
+            Path(".github/workflows/build-sample.yml"),
+        ]
+
+        pattern = re.compile(r"(?m)^(\s+VERSION_PREFIX:\s+')[^']+(')$")
+
+        for path in paths:
+            content = path.read_text()
+            updated, count = pattern.subn(rf"\g<1>{version}\2", content, count=1)
+            if count != 1:
+                raise SystemExit(f"Could not update VERSION_PREFIX in {path}")
+            path.write_text(updated)
+        PY
+
+    - name: Create version update pull request
+      uses: peter-evans/create-pull-request@v8.1.1
+      with:
+        base: ${{ steps.base-branch.outputs.value }}
+        branch: automation/version-update
+        commit-message: Bump version to ${{ steps.update-version.outputs.newVersion }}
+        title: Bump version to ${{ steps.update-version.outputs.newVersion }}
+        body: |
+          Automated version update created by the bump-release workflow.
+
+          - Base branch: `${{ steps.base-branch.outputs.value }}`
+          - New version: `${{ steps.update-version.outputs.newVersion }}`
+        committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+        author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+        signoff: false
+        delete-branch: true
+        labels: |
+          automated pr
