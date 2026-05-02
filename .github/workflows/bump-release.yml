@@ -1,0 +1,70 @@
+name: Bump release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional semantic version to set before opening the PR
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-release:
+    name: Bump release version
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Verify input version
+      uses: madhead/semver-utils@latest
+      if: ${{ inputs.version != '' }}
+      with:
+        version: ${{ inputs.version }}
+        lenient: false
+      continue-on-error: false
+
+    - uses: actions/checkout@v6
+      with:
+        ref: master
+
+    - name: Bump project version
+      id: bump-version
+      uses: vers-one/dotnet-project-version-updater@v1.8
+      if: ${{ inputs.version == '' }}
+      with:
+        file: framework-dotnet/framework-dotnet.csproj
+        version: '*.^.0'
+        tags: csproj.Version
+
+    - name: Set project version
+      id: set-version
+      uses: vers-one/dotnet-project-version-updater@v1.8
+      if: ${{ inputs.version != '' }}
+      with:
+        file: framework-dotnet/framework-dotnet.csproj
+        version: ${{ inputs.version }}
+        tags: csproj.Version
+
+    - name: Create version update pull request
+      uses: peter-evans/create-pull-request@v8.1.1
+      with:
+        base: master
+        branch: automation/version-update
+        commit-message: Bump version to ${{ steps.bump-version.outputs.newVersion || steps.set-version.outputs.newVersion }}
+        title: Bump version to ${{ steps.bump-version.outputs.newVersion || steps.set-version.outputs.newVersion }}
+        body: |
+          Automated version update created by the bump-release workflow.
+
+          - Base branch: `master`
+          - New version: `${{ steps.bump-version.outputs.newVersion || steps.set-version.outputs.newVersion }}`
+        committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+        author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+        signoff: false
+        delete-branch: true
+        labels: |
+          automated pr

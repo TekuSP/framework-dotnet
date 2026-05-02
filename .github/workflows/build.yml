@@ -17,7 +17,6 @@ permissions:
 
 env:
   DOTNET_VERSION: '10.0.x'
-  VERSION_PREFIX: '0.2.1'
   ARTIFACT_OUTPUT: '${{ github.workspace }}/artifacts'
 
 jobs:
@@ -101,6 +100,13 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Read current project version
+      id: current-version
+      uses: vers-one/dotnet-project-version-updater@v1.8
+      with:
+        file: framework-dotnet/framework-dotnet.csproj
+        version: '?.?.?'
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
@@ -145,7 +151,7 @@ jobs:
           ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-
 
     - name: Restore dependencies
-      run: dotnet restore -v normal --locked-mode -p:Version=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+      run: dotnet restore -v normal --locked-mode -p:Version=${{ steps.current-version.outputs.oldVersion }}-preview.${{ github.run_number }} -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}-preview.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
     - name: Build
       run: >-
@@ -153,8 +159,8 @@ jobs:
         -v normal
         --configuration Release
         --no-restore
-        -p:Version=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}
-        -p:InformationalVersion=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}+${{ github.sha }}
+        -p:Version=${{ steps.current-version.outputs.oldVersion }}-preview.${{ github.run_number }}
+        -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}-preview.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
@@ -172,8 +178,8 @@ jobs:
         --no-restore
         --no-build
         --output ${{ env.ARTIFACT_OUTPUT }}
-        -p:Version=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}
-        -p:InformationalVersion=${{ env.VERSION_PREFIX }}-preview.${{ github.run_number }}+${{ github.sha }}
+        -p:Version=${{ steps.current-version.outputs.oldVersion }}-preview.${{ github.run_number }}
+        -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}-preview.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
@@ -190,7 +196,7 @@ jobs:
         path: ${{ env.ARTIFACT_OUTPUT }}
         if-no-files-found: error
     - name: Push nugets to Github
-      if: github.event_name != 'pull_request'
+      if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/Release/') }}
       run: |
         nuget sources Add -Name "GitHub" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username "${{ github.actor }}" -Password "${{ secrets.GITHUB_TOKEN }}"
         nuget push "${{ env.ARTIFACT_OUTPUT }}/**/*.nupkg" -Source "GitHub"
