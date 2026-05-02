@@ -17,7 +17,6 @@ permissions:
 
 env:
   DOTNET_VERSION: '10.0.x'
-  VERSION_PREFIX: '0.2.1'
 
 jobs:
   build-native:
@@ -117,6 +116,13 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Read current project version
+      id: current-version
+      uses: vers-one/dotnet-project-version-updater@v1.8
+      with:
+        file: framework-dotnet/framework-dotnet.csproj
+        version: '?.?.?'
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
@@ -161,10 +167,10 @@ jobs:
           ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-
 
     - name: Restore dependencies for library
-      run: dotnet restore -v normal --locked-mode -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+      run: dotnet restore -v normal --locked-mode -p:Version=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }} -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
     - name: Restore dependencies for sample app
-      run: dotnet restore framework-dotnet-cli-test/framework-dotnet-cli-test.csproj -v normal -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }} -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
+      run: dotnet restore framework-dotnet-cli-test/framework-dotnet-cli-test.csproj -v normal -p:Version=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }} -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
     - name: Build library
       run: >-
@@ -172,8 +178,8 @@ jobs:
         -v normal
         --configuration Release
         --no-restore
-        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
-        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:Version=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }}
+        -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
@@ -189,8 +195,8 @@ jobs:
         -v normal
         --configuration Release
         --no-restore
-        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
-        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:Version=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }}
+        -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
@@ -204,8 +210,8 @@ jobs:
         --no-restore
         --no-build
         --output ${{ github.workspace }}/artifacts/sample-app/${{ matrix.platform }}
-        -p:Version=${{ env.VERSION_PREFIX }}.${{ github.run_number }}
-        -p:InformationalVersion=${{ env.VERSION_PREFIX }}.${{ github.run_number }}+${{ github.sha }}
+        -p:Version=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }}
+        -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}.${{ github.run_number }}+${{ github.sha }}
         -p:DebugSymbols=true
         -p:DebugType=portable
         -p:ContinuousIntegrationBuild=true
