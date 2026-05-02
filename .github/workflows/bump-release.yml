@@ -54,12 +54,12 @@ jobs:
       uses: peter-evans/create-pull-request@v8.1.1
       with:
         base: master
+        token: ${{ secrets.GH_PR_SEC }}
         branch: automation/version-update
         commit-message: Bump version to ${{ steps.bump-version.outputs.newVersion || steps.set-version.outputs.newVersion }}
         title: Bump version to ${{ steps.bump-version.outputs.newVersion || steps.set-version.outputs.newVersion }}
         body: |
           Automated version update created by the bump-release workflow.
-
           - Base branch: `master`
           - New version: `${{ steps.bump-version.outputs.newVersion || steps.set-version.outputs.newVersion }}`
         committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
