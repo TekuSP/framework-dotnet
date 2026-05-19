@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -48,6 +48,18 @@ internal unsafe partial struct FrameworkByteBuffer : IDisposable
     public readonly string ToUtf8String()
     {
         return Encoding.UTF8.GetString(AsSpan());
+    }
+
+    public byte[] ToArrayAndFree()
+    {
+        try
+        {
+            return ToArray();
+        }
+        finally
+        {
+            Free();
+        }
     }
 
     public string ToUtf8StringAndFree()

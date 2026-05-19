@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "pwsh -NoProfile -File .github/hooks/block-submodule-edits.ps1",
+        "windows": "pwsh -NoProfile -ExecutionPolicy Bypass -File .github/hooks/block-submodule-edits.ps1",
+        "linux": "pwsh -NoProfile -File .github/hooks/block-submodule-edits.ps1",
+        "osx": "pwsh -NoProfile -File .github/hooks/block-submodule-edits.ps1",
+        "timeout": 10
+      }
+    ]
+  }
+}

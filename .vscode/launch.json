@@ -1,0 +1,18 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Launch framework-dotnet-cli-test",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "build",
+			"program": "${workspaceFolder}/framework-dotnet-cli-test/bin/Debug/net10.0/framework-dotnet-cli-test.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/framework-dotnet-cli-test",
+			"stopAtEntry": false,
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"justMyCode": true
+		}
+	]
+}
