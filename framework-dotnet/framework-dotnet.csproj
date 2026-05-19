@@ -27,6 +27,12 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <FrameworkDotnetAnalyzerProjectPath>$(MSBuildProjectDirectory)\..\framework-dotnet-analyzers\framework-dotnet-analyzers.csproj</FrameworkDotnetAnalyzerProjectPath>
+    <FrameworkDotnetAnalyzerAssemblyPath>$(MSBuildProjectDirectory)\..\framework-dotnet-analyzers\bin\$(Configuration)\netstandard2.0\FrameworkDotnet.Analyzers.dll</FrameworkDotnetAnalyzerAssemblyPath>
+    <FrameworkDotnetAnalyzerPdbPath>$(MSBuildProjectDirectory)\..\framework-dotnet-analyzers\bin\$(Configuration)\netstandard2.0\FrameworkDotnet.Analyzers.pdb</FrameworkDotnetAnalyzerPdbPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <SkipRustBuild Condition="'$(SkipRustBuild)' == ''">false</SkipRustBuild>
     <RustProjectDir>$(MSBuildProjectDirectory)\..\framework-system-ffi-extensions\</RustProjectDir>
     <RustSubmoduleProjectDir>$(RustProjectDir)\framework-system\</RustSubmoduleProjectDir>
@@ -55,8 +61,16 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.IO.Hashing" Version="10.0.8" />
     <PackageReference Include="UnitsNet" Version="5.75.0" />
     <PackageReference Include="UnitsNet.NumberExtensions" Version="5.75.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(FrameworkDotnetAnalyzerProjectPath)"
+                      PrivateAssets="all"
+                      ReferenceOutputAssembly="false"
+                      GlobalPropertiesToRemove="TargetFramework" />
   </ItemGroup>
 
   <ItemGroup>
@@ -70,6 +84,8 @@
     <None Include="$(FrameworkDotnetWindowsArm64NativeLibraryPath)" Pack="true" PackagePath="runtimes\win-arm64\native\" Visible="false" Condition="Exists('$(FrameworkDotnetWindowsArm64NativeLibraryPath)')" />
     <None Include="$(FrameworkDotnetLinuxNativeLibraryPath)" Pack="true" PackagePath="runtimes\linux-x64\native\" Visible="false" Condition="Exists('$(FrameworkDotnetLinuxNativeLibraryPath)')" />
     <None Include="$(FrameworkDotnetLinuxArm64NativeLibraryPath)" Pack="true" PackagePath="runtimes\linux-arm64\native\" Visible="false" Condition="Exists('$(FrameworkDotnetLinuxArm64NativeLibraryPath)')" />
+    <None Include="$(FrameworkDotnetAnalyzerAssemblyPath)" Pack="true" PackagePath="analyzers\dotnet\cs\" Visible="false" Condition="Exists('$(FrameworkDotnetAnalyzerAssemblyPath)')" />
+    <None Include="$(FrameworkDotnetAnalyzerPdbPath)" Pack="true" PackagePath="analyzers\dotnet\cs\" Visible="false" Condition="Exists('$(FrameworkDotnetAnalyzerPdbPath)')" />
   </ItemGroup>
 
   <Target Name="EnsureRustSubmodule" BeforeTargets="Build" Condition="'$(SkipRustBuild)' != 'true' and !Exists('$(RustProjectDir)\Cargo.toml')">

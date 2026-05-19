@@ -1,5 +1,6 @@
 ﻿using FrameworkDotnet.Enums;
 using FrameworkDotnet.Exceptions.EcResponseDetails;
+using FrameworkDotnet.Exceptions.StatusCodes;
 using FrameworkDotnet.Interfaces;
 using FrameworkDotnet.Responses;
 
@@ -16,8 +17,7 @@ namespace FrameworkDotnet.HardwareTests;
 [Description("Hardware-dependent tests intended for manual execution on supported Framework devices.")]
 [Author("TekuSP", "richard.torhan@windowslive.com")]
 [Category("Hardware")]
-[Platform(platforms: "Windows10,Windows11,WindowsServer10,Linux", Reason ="Hardware tests require a supported Framework device.")]
-[Platform(platforms: "64-Bit-OS", Reason = "Hardware tests require a supported Framework device.")]
+[Platform(platforms: "Windows10,Windows11,WindowsServer10,Linux,64-Bit-OS", Reason = "Hardware tests require a supported Framework device.")]
 public sealed class FrameworkHardwareTests
 {
     private IFrameworkSystem frameworkSystem = null!;
@@ -171,6 +171,133 @@ public sealed class FrameworkHardwareTests
     }
 
     [Test]
+    public void FeatureFlags_ShouldReturnKnownManagedBits()
+    {
+        var featureFlags = ec.GetFeatureFlags();
+        Assert.That((ulong)featureFlags & ~(ulong)FrameworkEcFeatureFlags.All, Is.EqualTo(0UL));
+    }
+
+    [Test]
+    public void KeyboardBacklightSnapshot_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.GetKeyboardBacklightSnapshot(),
+            keyboardBacklight =>
+            {
+                Assert.That(double.IsNaN(keyboardBacklight.Brightness.Percent), Is.False);
+                Assert.That(keyboardBacklight.Brightness.Percent, Is.InRange(0, 100));
+            });
+    }
+
+    [Test]
+    public void FingerprintLedSnapshot_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.GetFingerprintLedSnapshot(),
+            fingerprintLed =>
+            {
+                Assert.That(Enum.IsDefined(fingerprintLed.Level));
+            });
+    }
+
+    [Test]
+    public void ExpansionBaySnapshot_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.GetExpansionBaySnapshot(),
+            expansionBay =>
+            {
+                Assert.That(Enum.IsDefined(expansionBay.Board));
+                Assert.That(Enum.IsDefined(expansionBay.Vendor));
+                Assert.That(Enum.IsDefined(expansionBay.PcieConfiguration));
+                Assert.That(expansionBay.SerialNumber, Is.Not.Null);
+            });
+    }
+
+    [Test]
+    public void GpuDescriptorHeaderSnapshot_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.GetGpuDescriptorHeaderSnapshot(),
+            header =>
+            {
+                Assert.That(header.RawMagicBytes, Has.Count.EqualTo(4));
+                Assert.That(Enum.IsDefined(header.BayType));
+                Assert.That(header.DescriptorVersion, Is.Not.Null);
+                Assert.That(header.HardwareVersion, Is.Not.Null);
+                Assert.That(header.Serial, Is.Not.Null);
+                Assert.That(header.Header, Is.Not.Null);
+                Assert.That(header.Header, Has.Count.GreaterThan(0));
+                Assert.That(header.Payload, Is.Not.Null);
+
+                if (header.BayType == FrameworkGpuDescriptorMagic.FrameworkExpansionBay)
+                {
+                    Assert.That(header.Payload, Is.Not.Empty);
+                }
+                else
+                {
+                    Assert.That(header.Payload, Is.Empty);
+                }
+            });
+    }
+
+    [Test]
+    public void GpuDescriptorReadback_ShouldValidateOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.GetGpuDescriptorHeaderSnapshot(),
+            header =>
+            {
+                Assume.That(
+                    header.BayType,
+                    Is.EqualTo(FrameworkGpuDescriptorMagic.FrameworkExpansionBay),
+                    "This device did not report a readable Framework expansion bay GPU descriptor.");
+
+                var descriptor = ec.ReadGpuDescriptor();
+
+                Assert.That(descriptor, Is.Not.Null.And.Not.Empty);
+                Assert.That(descriptor, Has.Length.EqualTo(header.Header.Count + header.Payload.Count));
+                Assert.That(descriptor.Take(header.Header.Count).SequenceEqual(header.Header), Is.True);
+                Assert.That(descriptor.Skip(header.Header.Count).SequenceEqual(header.Payload), Is.True);
+                Assert.That(ec.ValidateGpuDescriptor(descriptor), Is.True);
+            });
+    }
+
+    [Test]
+    public void ModuleInventorySnapshot_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.GetModuleInventorySnapshot(),
+            inventory =>
+            {
+                Assert.That(inventory.Modules, Has.Count.EqualTo(22));
+                Assert.That(inventory.UsbCSlots, Has.Count.EqualTo(6));
+                Assert.That(inventory.InputTopRowModules, Has.Count.EqualTo(5));
+                Assert.That(inventory.FixedModules, Has.Count.EqualTo(7));
+                Assert.That(inventory.DetachedModules, Has.Count.EqualTo(4));
+                Assert.That(inventory.ReportedModules.Count(), Is.EqualTo(inventory.ModuleCount));
+                Assert.That(inventory.ReportedUsbCSlots.Count(), Is.EqualTo(inventory.UsbCSlotCount));
+                Assert.That(inventory.ReportedInputTopRowModules.Count(), Is.EqualTo(inventory.InputTopRowCount));
+                Assert.That(inventory.ReportedFixedModules.Count(), Is.EqualTo(inventory.FixedModuleCount));
+                Assert.That(inventory.ReportedDetachedModules.Count(), Is.EqualTo(inventory.DetachedCount));
+
+                foreach (var module in inventory.ReportedFixedModules)
+                {
+                    Assert.That(module.IsPresent, Is.True);
+                }
+
+                foreach (var module in inventory.ReportedModules)
+                {
+                    Assert.That(Enum.IsDefined(module.Identity));
+                    Assert.That(Enum.IsDefined(module.Bus));
+                    Assert.That(Enum.IsDefined(module.SlotKind));
+                    Assert.That(Enum.IsDefined(module.Confidence));
+                    Assert.That((uint)module.Flags & ~(uint)FrameworkModuleFlags.All, Is.EqualTo(0U));
+                }
+            });
+    }
+
+    [Test]
     public void FanControlCommands_ShouldReturnStructuredResponses_WhenFansAreReported()
     {
         var fanCapabilities = ec.GetFanCapabilitiesSnapshot();
@@ -218,5 +345,16 @@ public sealed class FrameworkHardwareTests
         Assert.That(
             () => ec.SetFanRpm(0, RotationalSpeed.FromRevolutionsPerMinute(2500.5)),
             Throws.TypeOf<ArgumentOutOfRangeException>());
+    }
+
+    private static void AssertOptionalReadback<T>(Func<T> readback, Action<T> assertions)
+    {
+        try
+        {
+            assertions(readback());
+        }
+        catch (FrameworkDataUnavailableStatusException)
+        {
+        }
     }
 }

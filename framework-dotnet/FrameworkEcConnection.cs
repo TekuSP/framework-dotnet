@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 
+using FrameworkDotnet.Attributes;
 using FrameworkDotnet.Enums;
 using FrameworkDotnet.Interfaces;
 using FrameworkDotnet.Responses;
@@ -74,6 +75,96 @@ public sealed class FrameworkEcConnection : SafeHandleZeroOrMinusOneIsInvalid, I
         unsafe
         {
             return Native.NativeMethods.framework_ec_get_thermal_snapshot(HandlePointer).GetValueOrThrow().ToManagedSnapshot();
+        }
+    }
+
+    /// <inheritdoc/>
+    public FrameworkEcFeatureFlags GetFeatureFlags()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_feature_flags(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework13, Message = "Upstream framework-system currently documents keyboard-backlight support on Framework Laptop 13 only.")]
+    public FrameworkKeyboardBacklightSnapshot GetKeyboardBacklightSnapshot()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_keyboard_backlight(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    public FrameworkFingerprintLedSnapshot GetFingerprintLedSnapshot()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_fingerprint_led(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Upstream framework-system currently documents expansion-bay status support on Framework Laptop 16 only.")]
+    public FrameworkExpansionBaySnapshot GetExpansionBaySnapshot()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_expansion_bay_status(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Upstream framework-system currently documents the expansion-bay GPU descriptor surface on Framework Laptop 16 only.")]
+    public FrameworkGpuDescriptorHeaderSnapshot GetGpuDescriptorHeaderSnapshot()
+    {
+        unsafe
+        {
+            var header = Native.NativeMethods.framework_ec_get_gpu_descriptor_header(HandlePointer).GetValueOrThrow();
+
+            if (header.GetBayType() != FrameworkGpuDescriptorMagic.FrameworkExpansionBay)
+            {
+                return header.ToManagedSnapshot();
+            }
+
+            var descriptor = Native.NativeMethods.framework_ec_read_gpu_descriptor(HandlePointer).GetValueOrThrow();
+            return header.ToManagedSnapshot(descriptor);
+        }
+    }
+
+    /// <inheritdoc/>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Upstream framework-system currently documents the expansion-bay GPU descriptor surface on Framework Laptop 16 only.")]
+    public byte[] ReadGpuDescriptor()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_read_gpu_descriptor(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Upstream framework-system currently documents the expansion-bay GPU descriptor surface on Framework Laptop 16 only.")]
+    public bool ValidateGpuDescriptor(byte[] expectedDescriptor)
+    {
+        ArgumentNullException.ThrowIfNull(expectedDescriptor);
+
+        unsafe
+        {
+            fixed (byte* expectedDescriptorPointer = expectedDescriptor)
+            {
+                return Native.NativeMethods.framework_ec_validate_gpu_descriptor(HandlePointer, expectedDescriptorPointer, (uint)expectedDescriptor.Length).GetValueOrThrow();
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public FrameworkModuleInventorySnapshot GetModuleInventorySnapshot()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_module_inventory(HandlePointer).GetValueOrThrow();
         }
     }
 
