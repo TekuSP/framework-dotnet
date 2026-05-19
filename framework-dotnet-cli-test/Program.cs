@@ -8,7 +8,6 @@ using FrameworkDotnet.Snapshots;
 using Spectre.Console;
 
 using System.Globalization;
-using System.Linq;
 using System.Text;
 
 namespace framework_dotnet_cli_test;
@@ -43,7 +42,7 @@ internal class Program
                 WritePanel(CreateOptionalPanel("[bold blue]Keyboard Backlight[/]", Color.Blue, () => FormatSimpleSnapshot(ec.GetKeyboardBacklightSnapshot())));
                 WritePanel(CreateOptionalPanel("[bold magenta]Fingerprint LED[/]", Color.Magenta, () => FormatSimpleSnapshot(ec.GetFingerprintLedSnapshot())));
                 WritePanel(CreateOptionalPanel("[bold green]Expansion Bay[/]", Color.Green, () => FormatSimpleSnapshot(ec.GetExpansionBaySnapshot())));
-                WritePanel(CreateOptionalPanel("[bold red]GPU Descriptor[/]", Color.Red, () => FormatGpuDescriptor(ec)));
+                WritePanel(CreateOptionalPanel("[bold green]Expansion Bay Modules[/]", Color.Green, () => FormatExpansionBayModules(ec.GetExpansionBayModulesSnapshot())));
                 WritePanel(CreateOptionalPanel("[bold blue]Module Inventory[/]", Color.Blue, () => FormatModuleInventory(ec.GetModuleInventorySnapshot())));
 
                 Thread.Sleep(RefreshInterval);
@@ -86,7 +85,7 @@ internal class Program
 
     private static Panel CreatePanel(string title, Color borderColor, string content)
     {
-        return new Panel(content)
+        return new Panel(new Text(content))
             .Header(title)
             .BorderColor(borderColor);
     }
@@ -147,46 +146,61 @@ internal class Program
         return content.ToString().TrimEnd();
     }
 
-    private static string FormatGpuDescriptor(IFrameworkEcConnection ec)
+    private static string FormatExpansionBayModules(FrameworkExpansionBayModulesSnapshot modules)
     {
-        FrameworkGpuDescriptorHeaderSnapshot header = ec.GetGpuDescriptorHeaderSnapshot();
-
         var content = new StringBuilder();
-        content.AppendLine($"Bay Type: {header.BayType}");
-        content.AppendLine($"Descriptor Version: {header.DescriptorVersion}");
-        content.AppendLine($"Hardware Version: {header.HardwareVersion}");
-        content.AppendLine($"Serial: {header.Serial}");
-        content.AppendLine($"Magic Bytes: {FormatHexPreview(header.RawMagicBytes, 4)}");
-        content.AppendLine($"Header Bytes: {header.Header.Count.ToString(CultureInfo.InvariantCulture)}");
-        content.AppendLine("Header Preview:");
-        content.AppendLine(FormatHexPreview(header.Header));
-
-        if (header.Payload.Count == 0)
-        {
-            content.AppendLine("Payload: <none>");
-        }
-        else
-        {
-            content.AppendLine($"Payload Bytes: {header.Payload.Count.ToString(CultureInfo.InvariantCulture)}");
-            content.AppendLine("Payload Preview:");
-            content.AppendLine(FormatHexPreview(header.Payload));
-        }
-
-        if (header.BayType == FrameworkGpuDescriptorMagic.FrameworkExpansionBay)
-        {
-            try
-            {
-                byte[] descriptor = ec.ReadGpuDescriptor();
-                content.AppendLine($"ReadGpuDescriptor Bytes: {descriptor.Length.ToString(CultureInfo.InvariantCulture)}");
-                content.AppendLine($"ValidateGpuDescriptor: {ec.ValidateGpuDescriptor(descriptor)}");
-            }
-            catch (FrameworkException ex)
-            {
-                content.AppendLine($"Read/Validate Error: {ex.Message}");
-            }
-        }
+        content.AppendLine($"Expansion Bay Count: {modules.ExpansionBayCount.ToString(CultureInfo.InvariantCulture)}");
+        AppendExpansionBayGroup(content, "Expansion Bays", modules.ReportedExpansionBays);
 
         return content.ToString().TrimEnd();
+    }
+
+    private static void AppendExpansionBayGroup(StringBuilder content, string groupName, IEnumerable<FrameworkExpansionBaySnapshot> expansionBays)
+    {
+        List<FrameworkExpansionBaySnapshot> reportedExpansionBays = [.. expansionBays];
+
+        content.AppendLine();
+        content.AppendLine($"{groupName}: {reportedExpansionBays.Count.ToString(CultureInfo.InvariantCulture)}");
+
+        if (reportedExpansionBays.Count == 0)
+        {
+            content.AppendLine("  <none>");
+            return;
+        }
+
+        foreach (FrameworkExpansionBaySnapshot expansionBay in reportedExpansionBays)
+        {
+            content.Append("  - ");
+            content.Append($"Identity={expansionBay.Identity}, Type={expansionBay.GetType().Name}, Present={expansionBay.IsPresent}, Enabled={expansionBay.IsEnabled}, Fault={expansionBay.HasFault}, Door Closed={expansionBay.IsDoorClosed}");
+            content.Append($", Board={expansionBay.Board}, Vendor={expansionBay.Vendor}");
+
+            if (expansionBay is FrameworkPcieExpansionBaySnapshot pcieExpansionBay)
+            {
+                content.Append($", PCIe={pcieExpansionBay.PcieConfiguration}");
+            }
+
+            if (expansionBay is FrameworkGpuExpansionBaySnapshot gpuExpansionBay)
+            {
+                content.Append($", GPU Descriptor Attached={gpuExpansionBay.HasGpuDescriptor}");
+
+                if (gpuExpansionBay.HasGpuDescriptor)
+                {
+                    content.Append($", GPU Descriptor Bay Type={gpuExpansionBay.GpuDescriptorBayType}");
+                    content.Append($", GPU Descriptor Version={gpuExpansionBay.GpuDescriptorVersion}");
+                    content.Append($", GPU Hardware Version={gpuExpansionBay.GpuDescriptorHardwareVersion}");
+                    content.Append($", GPU Descriptor Serial={gpuExpansionBay.GpuDescriptorSerial}");
+                    content.Append($", GPU Descriptor Header Bytes={gpuExpansionBay.GpuDescriptorHeader!.Count.ToString(CultureInfo.InvariantCulture)}");
+                    content.Append($", GPU Descriptor Payload Bytes={gpuExpansionBay.GpuDescriptorPayload!.Count.ToString(CultureInfo.InvariantCulture)}");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(expansionBay.SerialNumber))
+            {
+                content.Append($", Serial={expansionBay.SerialNumber}");
+            }
+
+            content.AppendLine();
+        }
     }
 
     private static string FormatModuleInventory(FrameworkModuleInventorySnapshot inventory)

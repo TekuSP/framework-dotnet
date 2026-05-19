@@ -137,19 +137,20 @@ public interface IFrameworkEcConnection : IDisposable
     FrameworkExpansionBaySnapshot GetExpansionBaySnapshot();
 
     /// <summary>
-    /// Gets the parsed GPU descriptor header snapshot.
+    /// Gets the current count-aware expansion-bay modules snapshot.
     /// </summary>
-    /// <returns>The parsed GPU descriptor header snapshot.</returns>
+    /// <returns>The current expansion-bay modules snapshot.</returns>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
     /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status, including data-unavailable conditions on unsupported platforms.</exception>
     /// <exception cref="FrameworkGpuDescriptorLengthException">Thrown when the reported GPU descriptor lengths do not match the bytes read from the EC.</exception>
     /// <exception cref="FrameworkGpuDescriptorChecksumException">Thrown when the GPU descriptor header or payload CRC32 does not match the bytes read from the EC.</exception>
-    /// <remarks>Upstream <c>framework-system</c> currently documents the expansion-bay GPU descriptor surface on Framework Laptop 16 only. Other Framework platform families may return data-unavailable statuses or firmware-specific values depending on native support.</remarks>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the native layer reports an enum value that is not recognized by the managed API.</exception>
+    /// <remarks>Upstream <c>framework-system</c> currently documents expansion-bay status support on Framework Laptop 16 only. The managed snapshot currently surfaces the single bay exposed by the native API through a fixed-slot, count-aware aggregate shape, and the returned <c>ExpansionBay_0</c> value may be a more specific <see cref="FrameworkExpansionBaySnapshot"/> subtype when module inventory can refine the classification. GPU-specialized subtypes attach the parsed GPU descriptor header when the expansion-bay module identity reports a GPU.</remarks>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
-    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Upstream framework-system currently documents the expansion-bay GPU descriptor surface on Framework Laptop 16 only.")]
-    FrameworkGpuDescriptorHeaderSnapshot GetGpuDescriptorHeaderSnapshot();
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Upstream framework-system currently documents expansion-bay status support on Framework Laptop 16 only.")]
+    FrameworkExpansionBayModulesSnapshot GetExpansionBayModulesSnapshot();
 
     /// <summary>
     /// Reads the raw GPU descriptor bytes.

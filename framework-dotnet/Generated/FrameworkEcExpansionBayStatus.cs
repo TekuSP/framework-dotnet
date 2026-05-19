@@ -63,16 +63,16 @@ internal unsafe partial struct FrameworkEcExpansionBayStatus
         };
     }
 
-    private readonly FrameworkDotnet.Enums.FrameworkGpuPcieConfig ToManagedPcieConfiguration()
+    private readonly FrameworkDotnet.Enums.FrameworkExpansionBayPcieConfiguration ToManagedPcieConfiguration()
     {
         return config switch
         {
-            FrameworkGpuPcieConfig.Unknown => FrameworkDotnet.Enums.FrameworkGpuPcieConfig.Unknown,
-            FrameworkGpuPcieConfig.Pcie4x1 => FrameworkDotnet.Enums.FrameworkGpuPcieConfig.Pcie4x1,
-            FrameworkGpuPcieConfig.Pcie4x2 => FrameworkDotnet.Enums.FrameworkGpuPcieConfig.Pcie4x2,
-            FrameworkGpuPcieConfig.Pcie4x4 => FrameworkDotnet.Enums.FrameworkGpuPcieConfig.Pcie4x4,
-            FrameworkGpuPcieConfig.Pcie5x4 => FrameworkDotnet.Enums.FrameworkGpuPcieConfig.Pcie5x4,
-            _ => throw new ArgumentOutOfRangeException(nameof(config), config, "Unhandled GPU PCIe configuration.")
+            FrameworkGpuPcieConfig.Unknown => FrameworkDotnet.Enums.FrameworkExpansionBayPcieConfiguration.Unknown,
+            FrameworkGpuPcieConfig.Pcie4x1 => FrameworkDotnet.Enums.FrameworkExpansionBayPcieConfiguration.Pcie4x1,
+            FrameworkGpuPcieConfig.Pcie4x2 => FrameworkDotnet.Enums.FrameworkExpansionBayPcieConfiguration.Pcie4x2,
+            FrameworkGpuPcieConfig.Pcie4x4 => FrameworkDotnet.Enums.FrameworkExpansionBayPcieConfiguration.Pcie4x4,
+            FrameworkGpuPcieConfig.Pcie5x4 => FrameworkDotnet.Enums.FrameworkExpansionBayPcieConfiguration.Pcie5x4,
+            _ => throw new ArgumentOutOfRangeException(nameof(config), config, "Unhandled expansion bay PCIe configuration.")
         };
     }
 }

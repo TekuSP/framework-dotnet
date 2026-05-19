@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.IO.Hashing;
 using System.Text;
 
 using FrameworkDotnet.Enums;
 using FrameworkDotnet.Exceptions;
-
-using ManagedGpuDescriptorHeaderSnapshot = FrameworkDotnet.Snapshots.FrameworkGpuDescriptorHeaderSnapshot;
 
 namespace Framework.System.Interop;
 
@@ -23,24 +22,24 @@ internal unsafe partial struct FrameworkGpuDescriptorHeader
         return ToManagedMagic(GetMagicBytes());
     }
 
-    internal readonly ManagedGpuDescriptorHeaderSnapshot ToManagedSnapshot()
+    internal readonly (IReadOnlyList<byte> RawMagicBytes, FrameworkGpuDescriptorMagic BayType, Version DescriptorVersion, Version HardwareVersion, string Serial, IReadOnlyList<byte> Header, IReadOnlyList<byte> Payload) ToManagedDescriptor()
     {
-        return CreateManagedSnapshot(GetSerializedHeaderBytes(), Array.Empty<byte>());
+        return CreateManagedDescriptor(GetSerializedHeaderBytes(), Array.Empty<byte>());
     }
 
-    internal readonly ManagedGpuDescriptorHeaderSnapshot ToManagedSnapshot(byte[] rawDescriptorBytes)
+    internal readonly (IReadOnlyList<byte> RawMagicBytes, FrameworkGpuDescriptorMagic BayType, Version DescriptorVersion, Version HardwareVersion, string Serial, IReadOnlyList<byte> Header, IReadOnlyList<byte> Payload) ToManagedDescriptor(byte[] rawDescriptorBytes)
     {
         ArgumentNullException.ThrowIfNull(rawDescriptorBytes);
 
         ValidateDescriptor(rawDescriptorBytes, out byte[] headerBytes, out byte[] payloadBytes);
-        return CreateManagedSnapshot(headerBytes, payloadBytes);
+        return CreateManagedDescriptor(headerBytes, payloadBytes);
     }
 
-    private readonly ManagedGpuDescriptorHeaderSnapshot CreateManagedSnapshot(byte[] headerBytes, byte[] payloadBytes)
+    private readonly (IReadOnlyList<byte> RawMagicBytes, FrameworkGpuDescriptorMagic BayType, Version DescriptorVersion, Version HardwareVersion, string Serial, IReadOnlyList<byte> Header, IReadOnlyList<byte> Payload) CreateManagedDescriptor(byte[] headerBytes, byte[] payloadBytes)
     {
         var rawMagicBytes = GetMagicBytes();
 
-        return new ManagedGpuDescriptorHeaderSnapshot(
+        return (
             rawMagicBytes,
             ToManagedMagic(rawMagicBytes),
             new Version(desc_ver_major, desc_ver_minor),

@@ -3,10 +3,10 @@
 namespace FrameworkDotnet.Enums;
 
 /// <summary>
-/// Represents the reported PCIe lane and generation configuration for a GPU or accessory path.
+/// Represents the reported PCIe lane and generation configuration for an expansion-bay PCIe path.
 /// </summary>
 [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Upstream framework-system currently documents expansion-bay status support on Framework Laptop 16 only.")]
-public enum FrameworkGpuPcieConfig
+public enum FrameworkExpansionBayPcieConfiguration
 {
     /// <summary>
     /// The PCIe configuration could not be determined.

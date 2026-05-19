@@ -3,6 +3,7 @@ using FrameworkDotnet.Exceptions.EcResponseDetails;
 using FrameworkDotnet.Exceptions.StatusCodes;
 using FrameworkDotnet.Interfaces;
 using FrameworkDotnet.Responses;
+using FrameworkDotnet.Snapshots;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -207,36 +208,53 @@ public sealed class FrameworkHardwareTests
             () => ec.GetExpansionBaySnapshot(),
             expansionBay =>
             {
+                AssertExpansionBayClassification(expansionBay, allowGenericBaseType: true);
                 Assert.That(Enum.IsDefined(expansionBay.Board));
                 Assert.That(Enum.IsDefined(expansionBay.Vendor));
-                Assert.That(Enum.IsDefined(expansionBay.PcieConfiguration));
                 Assert.That(expansionBay.SerialNumber, Is.Not.Null);
             });
     }
 
     [Test]
-    public void GpuDescriptorHeaderSnapshot_ShouldReturnExpectedInformationOrReportUnavailable()
+    public void ExpansionBayModulesSnapshot_ShouldReturnExpectedInformationOrReportUnavailable()
     {
         AssertOptionalReadback(
-            () => ec.GetGpuDescriptorHeaderSnapshot(),
-            header =>
+            () => ec.GetExpansionBayModulesSnapshot(),
+            modules =>
             {
-                Assert.That(header.RawMagicBytes, Has.Count.EqualTo(4));
-                Assert.That(Enum.IsDefined(header.BayType));
-                Assert.That(header.DescriptorVersion, Is.Not.Null);
-                Assert.That(header.HardwareVersion, Is.Not.Null);
-                Assert.That(header.Serial, Is.Not.Null);
-                Assert.That(header.Header, Is.Not.Null);
-                Assert.That(header.Header, Has.Count.GreaterThan(0));
-                Assert.That(header.Payload, Is.Not.Null);
+                Assert.That(modules.ExpansionBayCount, Is.InRange((byte)0, (byte)1));
+                Assert.That(modules.ExpansionBays, Has.Count.EqualTo(1));
+                Assert.That(modules.ReportedExpansionBays.Count(), Is.EqualTo(modules.ExpansionBayCount));
 
-                if (header.BayType == FrameworkGpuDescriptorMagic.FrameworkExpansionBay)
+                if (modules.ExpansionBayCount == 0)
                 {
-                    Assert.That(header.Payload, Is.Not.Empty);
+                    Assert.That(modules.ExpansionBay_0.IsPresent, Is.False);
                 }
-                else
+
+                foreach (var bay in modules.ReportedExpansionBays)
                 {
-                    Assert.That(header.Payload, Is.Empty);
+                    AssertExpansionBayClassification(bay, allowGenericBaseType: false);
+                    Assert.That(Enum.IsDefined(bay.Board));
+                    Assert.That(Enum.IsDefined(bay.Vendor));
+                    Assert.That(bay.SerialNumber, Is.Not.Null);
+
+                    if (bay is FrameworkPcieExpansionBaySnapshot pcieExpansionBay)
+                    {
+                        Assert.That(Enum.IsDefined(pcieExpansionBay.PcieConfiguration));
+                    }
+
+                    if (bay is FrameworkGpuExpansionBaySnapshot gpuExpansionBay)
+                    {
+                        Assert.That(gpuExpansionBay.HasGpuDescriptor, Is.True);
+                        Assert.That(gpuExpansionBay.GpuDescriptorRawMagicBytes, Has.Count.EqualTo(4));
+                        Assert.That(gpuExpansionBay.GpuDescriptorBayType, Is.Not.Null);
+                        Assert.That(Enum.IsDefined(gpuExpansionBay.GpuDescriptorBayType!.Value));
+                        Assert.That(gpuExpansionBay.GpuDescriptorVersion, Is.Not.Null);
+                        Assert.That(gpuExpansionBay.GpuDescriptorHardwareVersion, Is.Not.Null);
+                        Assert.That(gpuExpansionBay.GpuDescriptorSerial, Is.Not.Null);
+                        Assert.That(gpuExpansionBay.GpuDescriptorHeader, Is.Not.Null.And.Not.Empty);
+                        Assert.That(gpuExpansionBay.GpuDescriptorPayload, Is.Not.Null);
+                    }
                 }
             });
     }
@@ -245,20 +263,28 @@ public sealed class FrameworkHardwareTests
     public void GpuDescriptorReadback_ShouldValidateOrReportUnavailable()
     {
         AssertOptionalReadback(
-            () => ec.GetGpuDescriptorHeaderSnapshot(),
-            header =>
+            () => ec.GetExpansionBayModulesSnapshot(),
+            modules =>
             {
+                FrameworkGpuExpansionBaySnapshot? gpuExpansionBay = modules.ReportedExpansionBays.OfType<FrameworkGpuExpansionBaySnapshot>().SingleOrDefault();
+
                 Assume.That(
-                    header.BayType,
+                    gpuExpansionBay,
+                    Is.Not.Null,
+                    "This device did not report a GPU expansion bay module.");
+                Assert.That(gpuExpansionBay!.HasGpuDescriptor, Is.True);
+
+                Assume.That(
+                    gpuExpansionBay.GpuDescriptorBayType,
                     Is.EqualTo(FrameworkGpuDescriptorMagic.FrameworkExpansionBay),
                     "This device did not report a readable Framework expansion bay GPU descriptor.");
 
                 var descriptor = ec.ReadGpuDescriptor();
 
                 Assert.That(descriptor, Is.Not.Null.And.Not.Empty);
-                Assert.That(descriptor, Has.Length.EqualTo(header.Header.Count + header.Payload.Count));
-                Assert.That(descriptor.Take(header.Header.Count).SequenceEqual(header.Header), Is.True);
-                Assert.That(descriptor.Skip(header.Header.Count).SequenceEqual(header.Payload), Is.True);
+                Assert.That(descriptor, Has.Length.EqualTo(gpuExpansionBay.GpuDescriptorHeader!.Count + gpuExpansionBay.GpuDescriptorPayload!.Count));
+                Assert.That(descriptor.Take(gpuExpansionBay.GpuDescriptorHeader.Count).SequenceEqual(gpuExpansionBay.GpuDescriptorHeader), Is.True);
+                Assert.That(descriptor.Skip(gpuExpansionBay.GpuDescriptorHeader.Count).SequenceEqual(gpuExpansionBay.GpuDescriptorPayload), Is.True);
                 Assert.That(ec.ValidateGpuDescriptor(descriptor), Is.True);
             });
     }
@@ -345,6 +371,55 @@ public sealed class FrameworkHardwareTests
         Assert.That(
             () => ec.SetFanRpm(0, RotationalSpeed.FromRevolutionsPerMinute(2500.5)),
             Throws.TypeOf<ArgumentOutOfRangeException>());
+    }
+
+    private static void AssertExpansionBayClassification(FrameworkExpansionBaySnapshot expansionBay, bool allowGenericBaseType)
+    {
+        Assert.That(Enum.IsDefined(expansionBay.Identity));
+
+        if (!expansionBay.IsPresent)
+        {
+            Assert.That(expansionBay.Identity, Is.EqualTo(FrameworkModuleIdentity.None));
+            return;
+        }
+
+        switch (expansionBay.Identity)
+        {
+            case FrameworkModuleIdentity.ExpansionBay:
+                if (!allowGenericBaseType)
+                {
+                    Assert.That(expansionBay, Is.InstanceOf<FrameworkGenericExpansionBaySnapshot>());
+                }
+
+                break;
+            case FrameworkModuleIdentity.ExpansionBayDualInterposer:
+                Assert.That(expansionBay, Is.InstanceOf<FrameworkDualInterposerExpansionBaySnapshot>());
+                break;
+            case FrameworkModuleIdentity.ExpansionBaySingleInterposer:
+                Assert.That(expansionBay, Is.InstanceOf<FrameworkSingleInterposerExpansionBaySnapshot>());
+                break;
+            case FrameworkModuleIdentity.ExpansionBayUmaFans:
+                Assert.That(expansionBay, Is.InstanceOf<FrameworkUmaFansExpansionBaySnapshot>());
+                break;
+            case FrameworkModuleIdentity.ExpansionBaySsdHolder:
+                Assert.That(expansionBay, Is.InstanceOf<FrameworkSsdHolderExpansionBaySnapshot>());
+                break;
+            case FrameworkModuleIdentity.ExpansionBayPcieAccessory:
+                Assert.That(expansionBay, Is.InstanceOf<FrameworkPcieAccessoryExpansionBaySnapshot>());
+                break;
+            case FrameworkModuleIdentity.ExpansionBayAmdGpu:
+                Assert.That(expansionBay, Is.InstanceOf<FrameworkAmdGpuExpansionBaySnapshot>());
+                break;
+            case FrameworkModuleIdentity.ExpansionBayNvidiaGpu:
+                Assert.That(expansionBay, Is.InstanceOf<FrameworkNvidiaGpuExpansionBaySnapshot>());
+                break;
+            case FrameworkModuleIdentity.ExpansionBayFanOnly:
+                Assert.That(expansionBay, Is.InstanceOf<FrameworkFanOnlyExpansionBaySnapshot>());
+                break;
+            default:
+                Assert.Fail($"Unexpected expansion-bay identity {expansionBay.Identity}.");
+                break;
+        }
     }
 
     private static void AssertOptionalReadback<T>(Func<T> readback, Action<T> assertions)
