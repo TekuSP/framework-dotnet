@@ -239,7 +239,7 @@ public sealed record FrameworkModuleInventorySnapshot
     /// Gets the reported fixed internal and expansion-bay descriptors in index order.
     /// </summary>
     /// <seealso cref="FixedModuleCount"/>
-    public IEnumerable<FrameworkModuleDescriptorSnapshot> ReportedFixedModules { get; init; }
+    public IReadOnlyList<FrameworkModuleDescriptorSnapshot> ReportedFixedModules { get; init; }
 
     /// <summary>
     /// Gets the detached descriptors in index order.

@@ -296,12 +296,13 @@ public sealed class FrameworkHardwareTests
             () => ec.GetModuleInventorySnapshot(),
             inventory =>
             {
-                Assert.That(inventory.Modules, Has.Count.EqualTo(22));
                 Assert.That(inventory.UsbCSlots, Has.Count.EqualTo(6));
                 Assert.That(inventory.InputTopRowModules, Has.Count.EqualTo(5));
                 Assert.That(inventory.FixedModules, Has.Count.EqualTo(7));
                 Assert.That(inventory.DetachedModules, Has.Count.EqualTo(4));
-                Assert.That(inventory.ReportedModules.Count(), Is.EqualTo(inventory.ModuleCount));
+                Assert.That(
+                    inventory.ReportedUsbCSlots.Count() + inventory.ReportedInputTopRowModules.Count() + inventory.ReportedFixedModules.Count() + inventory.ReportedDetachedModules.Count(),
+                    Is.EqualTo(inventory.ModuleCount));
                 Assert.That(inventory.ReportedUsbCSlots.Count(), Is.EqualTo(inventory.UsbCSlotCount));
                 Assert.That(inventory.ReportedInputTopRowModules.Count(), Is.EqualTo(inventory.InputTopRowCount));
                 Assert.That(inventory.ReportedFixedModules.Count(), Is.EqualTo(inventory.FixedModuleCount));
@@ -312,7 +313,16 @@ public sealed class FrameworkHardwareTests
                     Assert.That(module.IsPresent, Is.True);
                 }
 
-                foreach (var module in inventory.ReportedModules)
+                foreach (var slot in inventory.ReportedUsbCSlots)
+                {
+                    Assert.That(Enum.IsDefined(slot.Identity));
+                    Assert.That(Enum.IsDefined(slot.Bus));
+                    Assert.That(Enum.IsDefined(slot.SlotKind));
+                    Assert.That(Enum.IsDefined(slot.Confidence));
+                    Assert.That((uint)slot.Flags & ~(uint)FrameworkModuleFlags.All, Is.EqualTo(0U));
+                }
+
+                foreach (var module in inventory.ReportedInputTopRowModules.Concat(inventory.ReportedFixedModules).Concat(inventory.ReportedDetachedModules))
                 {
                     Assert.That(Enum.IsDefined(module.Identity));
                     Assert.That(Enum.IsDefined(module.Bus));

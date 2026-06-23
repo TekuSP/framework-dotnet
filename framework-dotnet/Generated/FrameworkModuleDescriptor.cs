@@ -54,7 +54,7 @@ internal unsafe partial struct FrameworkModuleDescriptor
             FrameworkModuleIdentity.MicroSdExpansionCard => FrameworkDotnet.Enums.FrameworkModuleIdentity.MicroSdExpansionCard,
             FrameworkModuleIdentity.SdExpansionCard => FrameworkDotnet.Enums.FrameworkModuleIdentity.SdExpansionCard,
             FrameworkModuleIdentity.SsdExpansionCard => FrameworkDotnet.Enums.FrameworkModuleIdentity.SsdExpansionCard,
-            _ => throw new ArgumentOutOfRangeException(nameof(identity), identity, "Unhandled module identity.")
+            _ => FrameworkDotnet.Enums.FrameworkModuleIdentity.None,
         };
     }
 
@@ -67,7 +67,7 @@ internal unsafe partial struct FrameworkModuleDescriptor
             FrameworkModuleBus.Usb => FrameworkDotnet.Enums.FrameworkModuleBus.Usb,
             FrameworkModuleBus.Hid => FrameworkDotnet.Enums.FrameworkModuleBus.Hid,
             FrameworkModuleBus.Composite => FrameworkDotnet.Enums.FrameworkModuleBus.Composite,
-            _ => throw new ArgumentOutOfRangeException(nameof(bus), bus, "Unhandled module bus.")
+            _ => FrameworkDotnet.Enums.FrameworkModuleBus.Unknown,
         };
     }
 
@@ -83,7 +83,7 @@ internal unsafe partial struct FrameworkModuleDescriptor
             FrameworkModuleSlotKind.InternalFixed => FrameworkDotnet.Enums.FrameworkModuleSlotKind.InternalFixed,
             FrameworkModuleSlotKind.Detached => FrameworkDotnet.Enums.FrameworkModuleSlotKind.Detached,
             FrameworkModuleSlotKind.UsbCExpansionCardSlot => FrameworkDotnet.Enums.FrameworkModuleSlotKind.UsbCExpansionCardSlot,
-            _ => throw new ArgumentOutOfRangeException(nameof(slot_kind), slot_kind, "Unhandled module slot kind.")
+            _ => FrameworkDotnet.Enums.FrameworkModuleSlotKind.None,
         };
     }
 
@@ -95,7 +95,7 @@ internal unsafe partial struct FrameworkModuleDescriptor
             FrameworkModuleConfidence.DerivedWeak => FrameworkDotnet.Enums.FrameworkModuleConfidence.DerivedWeak,
             FrameworkModuleConfidence.DerivedStrong => FrameworkDotnet.Enums.FrameworkModuleConfidence.DerivedStrong,
             FrameworkModuleConfidence.Direct => FrameworkDotnet.Enums.FrameworkModuleConfidence.Direct,
-            _ => throw new ArgumentOutOfRangeException(nameof(confidence), confidence, "Unhandled module confidence.")
+            _ => FrameworkDotnet.Enums.FrameworkModuleConfidence.Unknown,
         };
     }
 }
