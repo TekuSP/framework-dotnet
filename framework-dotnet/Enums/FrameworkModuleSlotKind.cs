@@ -44,4 +44,9 @@ public enum FrameworkModuleSlotKind : byte
     /// An observed device or module that could not be mapped confidently to a fixed slot.
     /// </summary>
     Detached = 6,
+
+    /// <summary>
+    /// Numbered Framework expansion card slot (slots 0–5 in the inventory).
+    /// </summary>
+    UsbCExpansionCardSlot = 7,
 }

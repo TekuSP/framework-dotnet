@@ -16,6 +16,6 @@ internal unsafe partial struct FrameworkFanReading
 
     internal readonly FrameworkFanSnapshot ToManagedSnapshot()
     {
-        return new FrameworkFanSnapshot((FrameworkDotnet.Enums.FrameworkFanState)(int)state, RotationalSpeed.FromRevolutionsPerMinute(rpm));
+        return new FrameworkFanSnapshot((FrameworkDotnet.Enums.FrameworkFanState)(int)state, RotationalSpeed.FromRevolutionsPerMinute(rpm), (FrameworkDotnet.Enums.FrameworkFanName)(ushort)name);
     }
 }

@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 
-using ManagedModuleDescriptorSnapshot = FrameworkDotnet.Snapshots.FrameworkModuleDescriptorSnapshot;
+using ManagedExpansionCardSlotSnapshot = FrameworkDotnet.Snapshots.FrameworkExpansionCardSlotSnapshot;
 
 namespace Framework.System.Interop;
 
-internal unsafe partial struct FrameworkModuleDescriptor
+internal unsafe partial struct FrameworkExpansionCardModuleDescriptor
 {
-    internal readonly ManagedModuleDescriptorSnapshot ToManagedSnapshot()
+    internal readonly ManagedExpansionCardSlotSnapshot ToManagedSnapshot()
     {
-        return new ManagedModuleDescriptorSnapshot(
+        return new ManagedExpansionCardSlotSnapshot(
             ToManagedIdentity(),
             ToManagedBus(),
             ToManagedSlotKind(),
@@ -18,7 +18,10 @@ internal unsafe partial struct FrameworkModuleDescriptor
             (FrameworkDotnet.Enums.FrameworkModuleFlags)flags,
             vendor_id,
             product_id,
-            board_id);
+            board_id,
+            pd.ToManagedSnapshot(),
+            ToManagedCardType(),
+            ToManagedCardConfidence());
     }
 
     private readonly FrameworkDotnet.Enums.FrameworkModuleIdentity ToManagedIdentity()
@@ -96,6 +99,37 @@ internal unsafe partial struct FrameworkModuleDescriptor
             FrameworkModuleConfidence.DerivedStrong => FrameworkDotnet.Enums.FrameworkModuleConfidence.DerivedStrong,
             FrameworkModuleConfidence.Direct => FrameworkDotnet.Enums.FrameworkModuleConfidence.Direct,
             _ => throw new ArgumentOutOfRangeException(nameof(confidence), confidence, "Unhandled module confidence.")
+        };
+    }
+
+    private readonly FrameworkDotnet.Enums.FrameworkExpansionCardType ToManagedCardType()
+    {
+        return card_type switch
+        {
+            FrameworkExpansionCardType.Unknown => FrameworkDotnet.Enums.FrameworkExpansionCardType.Unknown,
+            FrameworkExpansionCardType.DisplayPort => FrameworkDotnet.Enums.FrameworkExpansionCardType.DisplayPort,
+            FrameworkExpansionCardType.Hdmi => FrameworkDotnet.Enums.FrameworkExpansionCardType.Hdmi,
+            FrameworkExpansionCardType.Audio => FrameworkDotnet.Enums.FrameworkExpansionCardType.Audio,
+            FrameworkExpansionCardType.UsbA => FrameworkDotnet.Enums.FrameworkExpansionCardType.UsbA,
+            FrameworkExpansionCardType.UsbC => FrameworkDotnet.Enums.FrameworkExpansionCardType.UsbC,
+            FrameworkExpansionCardType.Ethernet => FrameworkDotnet.Enums.FrameworkExpansionCardType.Ethernet,
+            FrameworkExpansionCardType.Ethernet10G => FrameworkDotnet.Enums.FrameworkExpansionCardType.Ethernet10G,
+            FrameworkExpansionCardType.MicroSd => FrameworkDotnet.Enums.FrameworkExpansionCardType.MicroSd,
+            FrameworkExpansionCardType.Sd => FrameworkDotnet.Enums.FrameworkExpansionCardType.Sd,
+            FrameworkExpansionCardType.Ssd => FrameworkDotnet.Enums.FrameworkExpansionCardType.Ssd,
+            _ => throw new ArgumentOutOfRangeException(nameof(card_type), card_type, "Unhandled expansion card type.")
+        };
+    }
+
+    private readonly FrameworkDotnet.Enums.FrameworkModuleConfidence ToManagedCardConfidence()
+    {
+        return card_confidence switch
+        {
+            FrameworkModuleConfidence.Unknown => FrameworkDotnet.Enums.FrameworkModuleConfidence.Unknown,
+            FrameworkModuleConfidence.DerivedWeak => FrameworkDotnet.Enums.FrameworkModuleConfidence.DerivedWeak,
+            FrameworkModuleConfidence.DerivedStrong => FrameworkDotnet.Enums.FrameworkModuleConfidence.DerivedStrong,
+            FrameworkModuleConfidence.Direct => FrameworkDotnet.Enums.FrameworkModuleConfidence.Direct,
+            _ => throw new ArgumentOutOfRangeException(nameof(card_confidence), card_confidence, "Unhandled module confidence.")
         };
     }
 }
