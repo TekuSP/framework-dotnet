@@ -26,6 +26,17 @@ public record FrameworkExpansionBaySnapshot
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FrameworkExpansionBaySnapshot"/> class.
+    /// </summary>
+    /// <param name="isPresent">A value indicating whether the expansion bay or module is present.</param>
+    /// <param name="isEnabled">A value indicating whether the expansion bay is enabled.</param>
+    /// <param name="hasFault">A value indicating whether the expansion bay reports a fault condition.</param>
+    /// <param name="isDoorClosed">A value indicating whether the expansion bay door or latch is closed.</param>
+    /// <param name="board">The expansion bay board classification.</param>
+    /// <param name="vendor">The expansion bay occupant or vendor family classification.</param>
+    /// <param name="pcieConfiguration">The reported PCIe lane and speed configuration.</param>
+    /// <param name="serialNumber">The reported serial number, when available.</param>
     internal FrameworkExpansionBaySnapshot(bool isPresent, bool isEnabled, bool hasFault, bool isDoorClosed, FrameworkExpansionBayBoard board, FrameworkExpansionBayVendor vendor, FrameworkExpansionBayPcieConfiguration pcieConfiguration, string serialNumber)
         : this(isPresent ? FrameworkModuleIdentity.ExpansionBay : FrameworkModuleIdentity.None, isPresent, isEnabled, hasFault, isDoorClosed, board, vendor, pcieConfiguration, serialNumber)
     {
@@ -116,6 +127,9 @@ public record FrameworkExpansionBaySnapshot
     /// </summary>
     public string SerialNumber { get; init; }
 
+    /// <summary>
+    /// Gets the raw PCIe configuration value reported by the EC before managed classification.
+    /// </summary>
     internal FrameworkExpansionBayPcieConfiguration RawPcieConfiguration { get; init; }
 
     public override string ToString()

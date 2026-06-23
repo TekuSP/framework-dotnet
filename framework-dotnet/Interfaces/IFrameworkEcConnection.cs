@@ -169,7 +169,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// Validates the raw GPU descriptor bytes against the live descriptor exposed by the EC.
     /// </summary>
     /// <param name="expectedDescriptor">The descriptor bytes to validate.</param>
-    /// <returns><see langword="true"/> when the descriptor bytes match; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if the descriptor bytes match; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="expectedDescriptor"/> is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
     /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status, including data-unavailable conditions on unsupported platforms.</exception>

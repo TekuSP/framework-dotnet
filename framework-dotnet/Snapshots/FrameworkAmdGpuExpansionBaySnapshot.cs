@@ -21,6 +21,11 @@ public sealed record FrameworkAmdGpuExpansionBaySnapshot : FrameworkGpuExpansion
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FrameworkAmdGpuExpansionBaySnapshot"/> class with an attached GPU descriptor.
+    /// </summary>
+    /// <param name="snapshot">The snapshot to classify.</param>
+    /// <param name="gpuDescriptor">The parsed GPU descriptor tuple.</param>
     internal FrameworkAmdGpuExpansionBaySnapshot(FrameworkExpansionBaySnapshot snapshot, (IReadOnlyList<byte> RawMagicBytes, FrameworkGpuDescriptorMagic BayType, Version DescriptorVersion, Version HardwareVersion, string Serial, IReadOnlyList<byte> Header, IReadOnlyList<byte> Payload) gpuDescriptor)
         : base(snapshot, FrameworkModuleIdentity.ExpansionBayAmdGpu, gpuDescriptor)
     {

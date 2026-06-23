@@ -21,6 +21,11 @@ public sealed record FrameworkNvidiaGpuExpansionBaySnapshot : FrameworkGpuExpans
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FrameworkNvidiaGpuExpansionBaySnapshot"/> class with an attached GPU descriptor.
+    /// </summary>
+    /// <param name="snapshot">The snapshot to classify.</param>
+    /// <param name="gpuDescriptor">The parsed GPU descriptor tuple.</param>
     internal FrameworkNvidiaGpuExpansionBaySnapshot(FrameworkExpansionBaySnapshot snapshot, (IReadOnlyList<byte> RawMagicBytes, FrameworkGpuDescriptorMagic BayType, Version DescriptorVersion, Version HardwareVersion, string Serial, IReadOnlyList<byte> Header, IReadOnlyList<byte> Payload) gpuDescriptor)
         : base(snapshot, FrameworkModuleIdentity.ExpansionBayNvidiaGpu, gpuDescriptor)
     {

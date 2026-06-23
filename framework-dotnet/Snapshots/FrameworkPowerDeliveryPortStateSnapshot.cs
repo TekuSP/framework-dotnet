@@ -21,12 +21,12 @@ public sealed record FrameworkPowerDeliveryPortStateSnapshot
     /// <param name="voltage">The negotiated voltage.</param>
     /// <param name="current">The negotiated current.</param>
     /// <param name="hasPowerDeliveryContract">A value indicating whether a Power Delivery contract is active.</param>
-    /// <param name="vconnActive">A value indicating whether VCONN is active.</param>
-    /// <param name="eprActive">A value indicating whether Extended Power Range is active.</param>
-    /// <param name="eprSupport">A value indicating whether the port supports Extended Power Range.</param>
-    /// <param name="activePort">A value indicating whether this is the active charging port.</param>
+    /// <param name="isVconnActive">A value indicating whether VCONN is active.</param>
+    /// <param name="isEprActive">A value indicating whether Extended Power Range is active.</param>
+    /// <param name="isEprSupported">A value indicating whether the port supports Extended Power Range.</param>
+    /// <param name="isActivePort">A value indicating whether this is the active charging port.</param>
     /// <param name="altModeFlags">The raw EC alt-mode status bits.</param>
-    public FrameworkPowerDeliveryPortStateSnapshot(FrameworkPowerDeliveryTypeCState cState, FrameworkPowerDeliveryPowerRole powerRole, FrameworkPowerDeliveryDataRole dataRole, FrameworkPowerDeliveryCcPolarity ccPolarity, ElectricPotential voltage, ElectricCurrent current, bool hasPowerDeliveryContract, bool vconnActive, bool eprActive, bool eprSupport, bool activePort, byte altModeFlags)
+    public FrameworkPowerDeliveryPortStateSnapshot(FrameworkPowerDeliveryTypeCState cState, FrameworkPowerDeliveryPowerRole powerRole, FrameworkPowerDeliveryDataRole dataRole, FrameworkPowerDeliveryCcPolarity ccPolarity, ElectricPotential voltage, ElectricCurrent current, bool hasPowerDeliveryContract, bool isVconnActive, bool isEprActive, bool isEprSupported, bool isActivePort, byte altModeFlags)
     {
         CState = cState;
         PowerRole = powerRole;
@@ -35,10 +35,10 @@ public sealed record FrameworkPowerDeliveryPortStateSnapshot
         Voltage = voltage;
         Current = current;
         HasPowerDeliveryContract = hasPowerDeliveryContract;
-        VconnActive = vconnActive;
-        EprActive = eprActive;
-        EprSupport = eprSupport;
-        ActivePort = activePort;
+        IsVconnActive = isVconnActive;
+        IsEprActive = isEprActive;
+        IsEprSupported = isEprSupported;
+        IsActivePort = isActivePort;
         AltModeFlags = altModeFlags;
     }
 
@@ -80,22 +80,22 @@ public sealed record FrameworkPowerDeliveryPortStateSnapshot
     /// <summary>
     /// Gets a value indicating whether VCONN is active on this port.
     /// </summary>
-    public bool VconnActive { get; init; }
+    public bool IsVconnActive { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether Extended Power Range (EPR) is active.
     /// </summary>
-    public bool EprActive { get; init; }
+    public bool IsEprActive { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the port supports Extended Power Range (EPR).
     /// </summary>
-    public bool EprSupport { get; init; }
+    public bool IsEprSupported { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether this port is the active charging port.
     /// </summary>
-    public bool ActivePort { get; init; }
+    public bool IsActivePort { get; init; }
 
     /// <summary>
     /// Gets the raw EC alt-mode status bits.
@@ -105,6 +105,6 @@ public sealed record FrameworkPowerDeliveryPortStateSnapshot
 
     public override string ToString()
     {
-        return $"Power Delivery Port State: C-State: {CState}, Power Role: {PowerRole}, Data Role: {DataRole}, CC Polarity: {CcPolarity}, Voltage: {Voltage.ToString(CultureInfo.InvariantCulture)}, Current: {Current.ToString(CultureInfo.InvariantCulture)}, Contract: {HasPowerDeliveryContract}, VCONN: {VconnActive}, EPR Active: {EprActive}";
+        return $"Power Delivery Port State: C-State: {CState}, Power Role: {PowerRole}, Data Role: {DataRole}, CC Polarity: {CcPolarity}, Voltage: {Voltage.ToString(CultureInfo.InvariantCulture)}, Current: {Current.ToString(CultureInfo.InvariantCulture)}, Contract: {HasPowerDeliveryContract}, VCONN: {IsVconnActive}, EPR Active: {IsEprActive}";
     }
 }

@@ -9,7 +9,7 @@ namespace FrameworkDotnet.Snapshots;
 /// <summary>
 /// Represents a fan reading from the EC.
 /// </summary>
-public sealed class FrameworkFanSnapshot
+public sealed record FrameworkFanSnapshot
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="FrameworkFanSnapshot"/> class.
