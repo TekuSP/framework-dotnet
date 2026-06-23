@@ -169,7 +169,7 @@ public interface IFrameworkEcConnection : IDisposable
     /// Validates the raw GPU descriptor bytes against the live descriptor exposed by the EC.
     /// </summary>
     /// <param name="expectedDescriptor">The descriptor bytes to validate.</param>
-    /// <returns><see langword="true"/> when the descriptor bytes match; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if the descriptor bytes match; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="expectedDescriptor"/> is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
     /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status, including data-unavailable conditions on unsupported platforms.</exception>
@@ -190,6 +190,149 @@ public interface IFrameworkEcConnection : IDisposable
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
     FrameworkModuleInventorySnapshot GetModuleInventorySnapshot();
+
+    /// <summary>
+    /// Gets the current chassis intrusion snapshot.
+    /// </summary>
+    /// <returns>The chassis intrusion snapshot.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    FrameworkChassisIntrusionSnapshot GetChassisIntrusion();
+
+    /// <summary>
+    /// Gets the current EC uptime snapshot.
+    /// </summary>
+    /// <returns>The EC uptime snapshot.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    FrameworkEcUptimeSnapshot GetUptime();
+
+    /// <summary>
+    /// Gets the current S0ix (modern standby) sleep entry counter.
+    /// </summary>
+    /// <returns>The S0ix counter snapshot.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    FrameworkS0ixCounterSnapshot GetS0ixCounter();
+
+    /// <summary>
+    /// Resets the S0ix (modern standby) sleep entry counter.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    void ResetS0ixCounter();
+
+    /// <summary>
+    /// Gets the hardware privacy switch states.
+    /// </summary>
+    /// <returns>The privacy switches snapshot.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    FrameworkPrivacySwitchesSnapshot GetPrivacySwitches();
+
+    /// <summary>
+    /// Gets the current battery charge limits.
+    /// </summary>
+    /// <returns>The charge limits snapshot.</returns>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    FrameworkChargeLimitsSnapshot GetChargeLimits();
+
+    /// <summary>
+    /// Sets the battery charge limits.
+    /// </summary>
+    /// <param name="minPercent">The minimum charge threshold (0–100%) below which charging begins.</param>
+    /// <param name="maxPercent">The maximum charge threshold (0–100%) above which charging stops.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="minPercent"/> or <paramref name="maxPercent"/> is outside the 0–100 percent range, or when <paramref name="minPercent"/> exceeds <paramref name="maxPercent"/>.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    void SetChargeLimits(Ratio minPercent, Ratio maxPercent);
+
+    /// <summary>
+    /// Sets the charge current limit, optionally conditioned on a battery state-of-charge threshold.
+    /// </summary>
+    /// <param name="currentMa">The maximum charge current in milliamperes.</param>
+    /// <param name="batterySoc">The battery state-of-charge percentage (0–100) below which the limit is applied, or <see langword="null"/> to apply unconditionally.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="batterySoc"/> is outside the 0–100 range.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    void SetChargeCurrentLimit(uint currentMa, int? batterySoc = null);
+
+    /// <summary>
+    /// Sets the keyboard backlight brightness.
+    /// </summary>
+    /// <param name="brightness">The target brightness as a percentage-like ratio (0–100%).</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="brightness"/> is outside the 0–100 percent range.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <remarks>Upstream <c>framework-system</c> currently documents keyboard-backlight support on Framework Laptop 13 only. Other Framework platform families may return error statuses depending on native support.</remarks>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework13, Message = "Upstream framework-system currently documents keyboard-backlight support on Framework Laptop 13 only.")]
+    void SetKeyboardBacklight(Ratio brightness);
+
+    /// <summary>
+    /// Sets the fingerprint LED level.
+    /// </summary>
+    /// <param name="level">The target LED level. <see cref="FrameworkFingerprintLedLevel.Unknown"/> and <see cref="FrameworkFingerprintLedLevel.Custom"/> are rejected by the EC.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="level"/> is <see cref="FrameworkFingerprintLedLevel.Unknown"/> or <see cref="FrameworkFingerprintLedLevel.Custom"/>.</exception>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    void SetFingerprintLed(FrameworkFingerprintLedLevel level);
+
+    /// <summary>
+    /// Overrides the tablet mode state reported to the operating system.
+    /// </summary>
+    /// <param name="mode">The desired tablet mode override.</param>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the EC returns a failure response, including <c>InvalidCommand</c> on Framework 16 and Desktop platforms that lack a tablet hinge sensor.</exception>
+    /// <remarks>Only meaningful on Framework 12 and 13. Framework 16 and Desktop return <c>EcResponse(InvalidCommand)</c>.</remarks>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework13, Message = "Tablet mode override is supported on Framework 12 and 13. Framework 16 and Desktop return EcResponse(InvalidCommand).")]
+    void SetTabletMode(FrameworkTabletModeOverride mode);
+
+    /// <summary>
+    /// Sets the Framework 16 input deck operating mode.
+    /// </summary>
+    /// <param name="mode">The desired deck state mode.</param>
+    /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
+    /// <exception cref="FrameworkEcResponseException">Thrown when the EC returns a failure response, including <c>InvalidCommand</c> on non-Framework-16 platforms.</exception>
+    /// <remarks>Only meaningful on Framework 16. Other platforms return <c>EcResponse(InvalidCommand)</c>.</remarks>
+    /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
+    /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
+    /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Input deck mode control is specific to Framework Laptop 16.")]
+    void SetInputDeckMode(FrameworkDeckStateMode mode);
 
     /// <summary>
     /// Sets the fan speed target in RPM.

@@ -128,4 +128,39 @@ public enum FrameworkModuleIdentity
     /// </summary>
     [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "This module identity is specific to Framework Laptop 16 expansion-bay inventory.")]
     ExpansionBayFanOnly = 21,
+
+    /// <summary>
+    /// USB-A expansion card (USB hub).
+    /// </summary>
+    UsbAExpansionCard = 22,
+
+    /// <summary>
+    /// USB-C expansion card (passive passthrough).
+    /// </summary>
+    UsbCExpansionCard = 23,
+
+    /// <summary>
+    /// Ethernet 2.5G expansion card (Realtek RTL8156B).
+    /// </summary>
+    EthernetExpansionCard = 24,
+
+    /// <summary>
+    /// Ethernet 10G expansion card (WisdPi).
+    /// </summary>
+    Ethernet10GExpansionCard = 25,
+
+    /// <summary>
+    /// MicroSD expansion card.
+    /// </summary>
+    MicroSdExpansionCard = 26,
+
+    /// <summary>
+    /// Full-size SD expansion card.
+    /// </summary>
+    SdExpansionCard = 27,
+
+    /// <summary>
+    /// NVMe storage expansion card.
+    /// </summary>
+    SsdExpansionCard = 28,
 }

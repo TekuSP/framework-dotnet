@@ -185,6 +185,139 @@ public sealed class FrameworkEcConnection : SafeHandleZeroOrMinusOneIsInvalid, I
         }
     }
 
+    /// <inheritdoc/>
+    public FrameworkChassisIntrusionSnapshot GetChassisIntrusion()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_chassis_intrusion(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    public FrameworkEcUptimeSnapshot GetUptime()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_uptime(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    public FrameworkS0ixCounterSnapshot GetS0ixCounter()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_s0ix_counter(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    public void ResetS0ixCounter()
+    {
+        unsafe
+        {
+            Native.NativeMethods.framework_ec_reset_s0ix_counter(HandlePointer).ThrowIfFailure();
+        }
+    }
+
+    /// <inheritdoc/>
+    public FrameworkPrivacySwitchesSnapshot GetPrivacySwitches()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_privacy_switches(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    public FrameworkChargeLimitsSnapshot GetChargeLimits()
+    {
+        unsafe
+        {
+            return Native.NativeMethods.framework_ec_get_charge_limits(HandlePointer).GetValueOrThrow();
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SetChargeLimits(Ratio minPercent, Ratio maxPercent)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(minPercent.Percent, 0, nameof(minPercent));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(minPercent.Percent, 100, nameof(minPercent));
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxPercent.Percent, 0, nameof(maxPercent));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(maxPercent.Percent, 100, nameof(maxPercent));
+        if (minPercent > maxPercent)
+            throw new ArgumentOutOfRangeException(nameof(minPercent), minPercent, "Minimum charge limit must not exceed the maximum.");
+
+        unsafe
+        {
+            Native.NativeMethods.framework_ec_set_charge_limits(HandlePointer, (byte)minPercent.Percent, (byte)maxPercent.Percent).ThrowIfFailure();
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SetChargeCurrentLimit(uint currentMa, int? batterySoc = null)
+    {
+        if (batterySoc.HasValue)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(batterySoc.Value, nameof(batterySoc));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(batterySoc.Value, 100, nameof(batterySoc));
+        }
+
+        unsafe
+        {
+            Native.NativeMethods.framework_ec_set_charge_current_limit(HandlePointer, currentMa, batterySoc ?? -1).ThrowIfFailure();
+        }
+    }
+
+    /// <inheritdoc/>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework13, Message = "Upstream framework-system currently documents keyboard-backlight support on Framework Laptop 13 only.")]
+    public void SetKeyboardBacklight(Ratio brightness)
+    {
+        double percent = brightness.Percent;
+        ArgumentOutOfRangeException.ThrowIfNegative(percent, nameof(brightness));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(percent, 100.0, nameof(brightness));
+
+        unsafe
+        {
+            Native.NativeMethods.framework_ec_set_keyboard_backlight(HandlePointer, (byte)Math.Round(percent)).ThrowIfFailure();
+        }
+    }
+
+    /// <inheritdoc/>
+    public void SetFingerprintLed(FrameworkFingerprintLedLevel level)
+    {
+        if (level == FrameworkFingerprintLedLevel.Unknown || level == FrameworkFingerprintLedLevel.Custom)
+        {
+            throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown and Custom are get-only levels and cannot be set.");
+        }
+
+        unsafe
+        {
+            Native.NativeMethods.framework_ec_set_fingerprint_led(HandlePointer, (Native.FrameworkFingerprintLedLevel)(int)level).ThrowIfFailure();
+        }
+    }
+
+    /// <inheritdoc/>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework13, Message = "Tablet mode override is supported on Framework 12 and 13. Framework 16 and Desktop return EcResponse(InvalidCommand).")]
+    public void SetTabletMode(FrameworkTabletModeOverride mode)
+    {
+        unsafe
+        {
+            Native.NativeMethods.framework_ec_set_tablet_mode(HandlePointer, (Native.FrameworkTabletModeOverride)(int)mode).ThrowIfFailure();
+        }
+    }
+
+    /// <inheritdoc/>
+    [FrameworkPlatformSpecific(FrameworkPlatformFamily.Framework16, Message = "Input deck mode control is specific to Framework Laptop 16.")]
+    public void SetInputDeckMode(FrameworkDeckStateMode mode)
+    {
+        unsafe
+        {
+            Native.NativeMethods.framework_ec_set_input_deck_mode(HandlePointer, (Native.FrameworkDeckStateMode)(int)mode).ThrowIfFailure();
+        }
+    }
+
     private static FrameworkExpansionBayModulesSnapshot CreateExpansionBayModulesSnapshot(FrameworkExpansionBaySnapshot bay)
     {
         ArgumentNullException.ThrowIfNull(bay);

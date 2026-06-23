@@ -41,6 +41,11 @@ internal class Program
                 WritePanel(CreateOptionalPanel("[bold yellow]Feature Flags[/]", Color.Yellow, () => FormatFeatureFlags(ec.GetFeatureFlags())));
                 WritePanel(CreateOptionalPanel("[bold blue]Keyboard Backlight[/]", Color.Blue, () => FormatSimpleSnapshot(ec.GetKeyboardBacklightSnapshot())));
                 WritePanel(CreateOptionalPanel("[bold magenta]Fingerprint LED[/]", Color.Magenta, () => FormatSimpleSnapshot(ec.GetFingerprintLedSnapshot())));
+                WritePanel(CreateOptionalPanel("[bold cyan]Chassis Intrusion[/]", Color.Cyan, () => FormatSimpleSnapshot(ec.GetChassisIntrusion())));
+                WritePanel(CreateOptionalPanel("[bold green]Charge Limits[/]", Color.Green, () => FormatSimpleSnapshot(ec.GetChargeLimits())));
+                WritePanel(CreateOptionalPanel("[bold yellow]Privacy Switches[/]", Color.Yellow, () => FormatSimpleSnapshot(ec.GetPrivacySwitches())));
+                WritePanel(CreateOptionalPanel("[bold blue]EC Uptime[/]", Color.Blue, () => FormatSimpleSnapshot(ec.GetUptime())));
+                WritePanel(CreateOptionalPanel("[bold magenta]S0ix Counter[/]", Color.Magenta, () => FormatSimpleSnapshot(ec.GetS0ixCounter())));
                 WritePanel(CreateOptionalPanel("[bold green]Expansion Bay[/]", Color.Green, () => FormatSimpleSnapshot(ec.GetExpansionBaySnapshot())));
                 WritePanel(CreateOptionalPanel("[bold green]Expansion Bay Modules[/]", Color.Green, () => FormatExpansionBayModules(ec.GetExpansionBayModulesSnapshot())));
                 WritePanel(CreateOptionalPanel("[bold blue]Module Inventory[/]", Color.Blue, () => FormatModuleInventory(ec.GetModuleInventorySnapshot())));
@@ -208,12 +213,54 @@ internal class Program
         var content = new StringBuilder();
         content.AppendLine($"Module Count: {inventory.ModuleCount.ToString(CultureInfo.InvariantCulture)}");
 
-        AppendModuleGroup(content, "USB-C Slots", inventory.ReportedUsbCSlots);
+        AppendUsbCSlotGroup(content, "USB-C Slots", inventory.ReportedUsbCSlots);
         AppendModuleGroup(content, "Input Top Row Modules", inventory.ReportedInputTopRowModules);
         AppendModuleGroup(content, "Fixed Modules", inventory.ReportedFixedModules);
         AppendModuleGroup(content, "Detached Modules", inventory.ReportedDetachedModules);
 
         return content.ToString().TrimEnd();
+    }
+
+    private static void AppendUsbCSlotGroup(StringBuilder content, string groupName, IEnumerable<FrameworkExpansionCardSlotSnapshot> slots)
+    {
+        List<FrameworkExpansionCardSlotSnapshot> reportedSlots = [.. slots];
+
+        content.AppendLine();
+        content.AppendLine($"{groupName}: {reportedSlots.Count.ToString(CultureInfo.InvariantCulture)}");
+
+        if (reportedSlots.Count == 0)
+        {
+            content.AppendLine("  <none>");
+            return;
+        }
+
+        foreach (FrameworkExpansionCardSlotSnapshot slot in reportedSlots)
+        {
+            content.Append("  - ");
+            content.Append($"Slot #{slot.SlotIndex.ToString(CultureInfo.InvariantCulture)}: Present={slot.IsPresent}");
+            content.Append($", Identity={slot.Identity}, CardType={slot.CardType} ({slot.CardConfidence})");
+            content.Append($", Bus={slot.Bus}, Confidence={slot.Confidence}");
+            content.Append($", PD=[CState={slot.PowerDelivery.CState}, Role={slot.PowerDelivery.PowerRole}");
+
+            if (slot.PowerDelivery.HasPowerDeliveryContract)
+            {
+                content.Append($", {slot.PowerDelivery.Voltage.ToString(CultureInfo.InvariantCulture)} @ {slot.PowerDelivery.Current.ToString(CultureInfo.InvariantCulture)}");
+            }
+
+            content.Append(']');
+
+            if (slot.Flags != FrameworkModuleFlags.None)
+            {
+                content.Append($", Flags={slot.Flags}");
+            }
+
+            if (slot.VendorId != 0 || slot.ProductId != 0)
+            {
+                content.Append($", VID:PID=0x{slot.VendorId.ToString("X4", CultureInfo.InvariantCulture)}:0x{slot.ProductId.ToString("X4", CultureInfo.InvariantCulture)}");
+            }
+
+            content.AppendLine();
+        }
     }
 
     private static void AppendModuleGroup(StringBuilder content, string groupName, IEnumerable<FrameworkModuleDescriptorSnapshot> modules)

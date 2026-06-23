@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
@@ -15,12 +15,12 @@ public sealed record FrameworkModuleInventorySnapshot
     /// <param name="usbCSlotCount">The number of meaningful USB-C slot entries.</param>
     /// <param name="inputTopRowCount">The number of meaningful top-row or input deck entries.</param>
     /// <param name="detachedCount">The number of meaningful detached entries.</param>
-    /// <param name="usbCSlot_0">The first USB-C slot descriptor.</param>
-    /// <param name="usbCSlot_1">The second USB-C slot descriptor.</param>
-    /// <param name="usbCSlot_2">The third USB-C slot descriptor.</param>
-    /// <param name="usbCSlot_3">The fourth USB-C slot descriptor.</param>
-    /// <param name="usbCSlot_4">The fifth USB-C slot descriptor.</param>
-    /// <param name="usbCSlot_5">The sixth USB-C slot descriptor.</param>
+    /// <param name="usbCSlot_0">The first expansion card slot descriptor.</param>
+    /// <param name="usbCSlot_1">The second expansion card slot descriptor.</param>
+    /// <param name="usbCSlot_2">The third expansion card slot descriptor.</param>
+    /// <param name="usbCSlot_3">The fourth expansion card slot descriptor.</param>
+    /// <param name="usbCSlot_4">The fifth expansion card slot descriptor.</param>
+    /// <param name="usbCSlot_5">The sixth expansion card slot descriptor.</param>
     /// <param name="inputTopRow_0">The first top-row descriptor.</param>
     /// <param name="inputTopRow_1">The second top-row descriptor.</param>
     /// <param name="inputTopRow_2">The third top-row descriptor.</param>
@@ -37,7 +37,7 @@ public sealed record FrameworkModuleInventorySnapshot
     /// <param name="detached_1">The second detached descriptor.</param>
     /// <param name="detached_2">The third detached descriptor.</param>
     /// <param name="detached_3">The fourth detached descriptor.</param>
-    public FrameworkModuleInventorySnapshot(byte usbCSlotCount, byte inputTopRowCount, byte detachedCount, FrameworkModuleDescriptorSnapshot usbCSlot_0, FrameworkModuleDescriptorSnapshot usbCSlot_1, FrameworkModuleDescriptorSnapshot usbCSlot_2, FrameworkModuleDescriptorSnapshot usbCSlot_3, FrameworkModuleDescriptorSnapshot usbCSlot_4, FrameworkModuleDescriptorSnapshot usbCSlot_5, FrameworkModuleDescriptorSnapshot inputTopRow_0, FrameworkModuleDescriptorSnapshot inputTopRow_1, FrameworkModuleDescriptorSnapshot inputTopRow_2, FrameworkModuleDescriptorSnapshot inputTopRow_3, FrameworkModuleDescriptorSnapshot inputTopRow_4, FrameworkModuleDescriptorSnapshot inputTouchpad, FrameworkModuleDescriptorSnapshot internalKeyboard, FrameworkModuleDescriptorSnapshot internalTouchpad, FrameworkModuleDescriptorSnapshot fingerprintReader, FrameworkModuleDescriptorSnapshot touchscreen, FrameworkModuleDescriptorSnapshot webcam, FrameworkModuleDescriptorSnapshot expansionBay, FrameworkModuleDescriptorSnapshot detached_0, FrameworkModuleDescriptorSnapshot detached_1, FrameworkModuleDescriptorSnapshot detached_2, FrameworkModuleDescriptorSnapshot detached_3)
+    public FrameworkModuleInventorySnapshot(byte usbCSlotCount, byte inputTopRowCount, byte detachedCount, FrameworkExpansionCardSlotSnapshot usbCSlot_0, FrameworkExpansionCardSlotSnapshot usbCSlot_1, FrameworkExpansionCardSlotSnapshot usbCSlot_2, FrameworkExpansionCardSlotSnapshot usbCSlot_3, FrameworkExpansionCardSlotSnapshot usbCSlot_4, FrameworkExpansionCardSlotSnapshot usbCSlot_5, FrameworkModuleDescriptorSnapshot inputTopRow_0, FrameworkModuleDescriptorSnapshot inputTopRow_1, FrameworkModuleDescriptorSnapshot inputTopRow_2, FrameworkModuleDescriptorSnapshot inputTopRow_3, FrameworkModuleDescriptorSnapshot inputTopRow_4, FrameworkModuleDescriptorSnapshot inputTouchpad, FrameworkModuleDescriptorSnapshot internalKeyboard, FrameworkModuleDescriptorSnapshot internalTouchpad, FrameworkModuleDescriptorSnapshot fingerprintReader, FrameworkModuleDescriptorSnapshot touchscreen, FrameworkModuleDescriptorSnapshot webcam, FrameworkModuleDescriptorSnapshot expansionBay, FrameworkModuleDescriptorSnapshot detached_0, FrameworkModuleDescriptorSnapshot detached_1, FrameworkModuleDescriptorSnapshot detached_2, FrameworkModuleDescriptorSnapshot detached_3)
     {
         UsbCSlotCount = usbCSlotCount;
         InputTopRowCount = inputTopRowCount;
@@ -64,6 +64,18 @@ public sealed record FrameworkModuleInventorySnapshot
         Detached_1 = detached_1;
         Detached_2 = detached_2;
         Detached_3 = detached_3;
+
+        var reportedFixed = new List<FrameworkModuleDescriptorSnapshot>(7);
+        if (inputTouchpad.IsPresent) reportedFixed.Add(inputTouchpad);
+        if (internalKeyboard.IsPresent) reportedFixed.Add(internalKeyboard);
+        if (internalTouchpad.IsPresent) reportedFixed.Add(internalTouchpad);
+        if (fingerprintReader.IsPresent) reportedFixed.Add(fingerprintReader);
+        if (touchscreen.IsPresent) reportedFixed.Add(touchscreen);
+        if (webcam.IsPresent) reportedFixed.Add(webcam);
+        if (expansionBay.IsPresent) reportedFixed.Add(expansionBay);
+        FixedModuleCount = (byte)reportedFixed.Count;
+        ReportedFixedModules = reportedFixed;
+        ModuleCount = (byte)(usbCSlotCount + inputTopRowCount + detachedCount + FixedModuleCount);
     }
 
     /// <summary>
@@ -82,34 +94,34 @@ public sealed record FrameworkModuleInventorySnapshot
     public byte DetachedCount { get; init; }
 
     /// <summary>
-    /// Gets the first USB-C slot descriptor.
+    /// Gets the first expansion card slot descriptor.
     /// </summary>
-    public FrameworkModuleDescriptorSnapshot UsbCSlot_0 { get; init; }
+    public FrameworkExpansionCardSlotSnapshot UsbCSlot_0 { get; init; }
 
     /// <summary>
-    /// Gets the second USB-C slot descriptor.
+    /// Gets the second expansion card slot descriptor.
     /// </summary>
-    public FrameworkModuleDescriptorSnapshot UsbCSlot_1 { get; init; }
+    public FrameworkExpansionCardSlotSnapshot UsbCSlot_1 { get; init; }
 
     /// <summary>
-    /// Gets the third USB-C slot descriptor.
+    /// Gets the third expansion card slot descriptor.
     /// </summary>
-    public FrameworkModuleDescriptorSnapshot UsbCSlot_2 { get; init; }
+    public FrameworkExpansionCardSlotSnapshot UsbCSlot_2 { get; init; }
 
     /// <summary>
-    /// Gets the fourth USB-C slot descriptor.
+    /// Gets the fourth expansion card slot descriptor.
     /// </summary>
-    public FrameworkModuleDescriptorSnapshot UsbCSlot_3 { get; init; }
+    public FrameworkExpansionCardSlotSnapshot UsbCSlot_3 { get; init; }
 
     /// <summary>
-    /// Gets the fifth USB-C slot descriptor.
+    /// Gets the fifth expansion card slot descriptor.
     /// </summary>
-    public FrameworkModuleDescriptorSnapshot UsbCSlot_4 { get; init; }
+    public FrameworkExpansionCardSlotSnapshot UsbCSlot_4 { get; init; }
 
     /// <summary>
-    /// Gets the sixth USB-C slot descriptor.
+    /// Gets the sixth expansion card slot descriptor.
     /// </summary>
-    public FrameworkModuleDescriptorSnapshot UsbCSlot_5 { get; init; }
+    public FrameworkExpansionCardSlotSnapshot UsbCSlot_5 { get; init; }
 
     /// <summary>
     /// Gets the first top-row descriptor.
@@ -192,15 +204,15 @@ public sealed record FrameworkModuleInventorySnapshot
     public FrameworkModuleDescriptorSnapshot Detached_3 { get; init; }
 
     /// <summary>
-    /// Gets the USB-C slot descriptors in index order.
+    /// Gets the expansion card slot descriptors in index order.
     /// </summary>
-    public IReadOnlyList<FrameworkModuleDescriptorSnapshot> UsbCSlots => [UsbCSlot_0, UsbCSlot_1, UsbCSlot_2, UsbCSlot_3, UsbCSlot_4, UsbCSlot_5];
+    public IReadOnlyList<FrameworkExpansionCardSlotSnapshot> UsbCSlots => [UsbCSlot_0, UsbCSlot_1, UsbCSlot_2, UsbCSlot_3, UsbCSlot_4, UsbCSlot_5];
 
     /// <summary>
-    /// Gets the reported USB-C slot descriptors in index order.
+    /// Gets the reported expansion card slot descriptors in index order.
     /// </summary>
     /// <seealso cref="UsbCSlotCount"/>
-    public IEnumerable<FrameworkModuleDescriptorSnapshot> ReportedUsbCSlots => UsbCSlots.Take(UsbCSlotCount);
+    public IEnumerable<FrameworkExpansionCardSlotSnapshot> ReportedUsbCSlots => UsbCSlots.Take(UsbCSlotCount);
 
     /// <summary>
     /// Gets the top-row descriptors in index order.
@@ -214,6 +226,22 @@ public sealed record FrameworkModuleInventorySnapshot
     public IEnumerable<FrameworkModuleDescriptorSnapshot> ReportedInputTopRowModules => InputTopRowModules.Take(InputTopRowCount);
 
     /// <summary>
+    /// Gets the fixed internal and expansion-bay descriptors in index order.
+    /// </summary>
+    public IReadOnlyList<FrameworkModuleDescriptorSnapshot> FixedModules => [InputTouchpad, InternalKeyboard, InternalTouchpad, FingerprintReader, Touchscreen, Webcam, ExpansionBay];
+
+    /// <summary>
+    /// Gets the number of present fixed internal and expansion-bay descriptors.
+    /// </summary>
+    public byte FixedModuleCount { get; init; }
+
+    /// <summary>
+    /// Gets the reported fixed internal and expansion-bay descriptors in index order.
+    /// </summary>
+    /// <seealso cref="FixedModuleCount"/>
+    public IReadOnlyList<FrameworkModuleDescriptorSnapshot> ReportedFixedModules { get; init; }
+
+    /// <summary>
     /// Gets the detached descriptors in index order.
     /// </summary>
     public IReadOnlyList<FrameworkModuleDescriptorSnapshot> DetachedModules => [Detached_0, Detached_1, Detached_2, Detached_3];
@@ -225,36 +253,9 @@ public sealed record FrameworkModuleInventorySnapshot
     public IEnumerable<FrameworkModuleDescriptorSnapshot> ReportedDetachedModules => DetachedModules.Take(DetachedCount);
 
     /// <summary>
-    /// Gets the fixed internal and expansion-bay descriptors in index order.
+    /// Gets the total number of reported modules across all slot groups.
     /// </summary>
-    public IReadOnlyList<FrameworkModuleDescriptorSnapshot> FixedModules => [InputTouchpad, InternalKeyboard, InternalTouchpad, FingerprintReader, Touchscreen, Webcam, ExpansionBay];
-
-    /// <summary>
-    /// Gets the number of reported fixed internal and expansion-bay descriptors.
-    /// </summary>
-    public byte FixedModuleCount => (byte)FixedModules.Count(static module => module.IsPresent);
-
-    /// <summary>
-    /// Gets the reported fixed internal and expansion-bay descriptors in index order.
-    /// </summary>
-    /// <seealso cref="FixedModuleCount"/>
-    public IEnumerable<FrameworkModuleDescriptorSnapshot> ReportedFixedModules => FixedModules.Where(static module => module.IsPresent);
-
-    /// <summary>
-    /// Gets all module descriptors in index order.
-    /// </summary>
-    public IReadOnlyList<FrameworkModuleDescriptorSnapshot> Modules => [UsbCSlot_0, UsbCSlot_1, UsbCSlot_2, UsbCSlot_3, UsbCSlot_4, UsbCSlot_5, InputTopRow_0, InputTopRow_1, InputTopRow_2, InputTopRow_3, InputTopRow_4, InputTouchpad, InternalKeyboard, InternalTouchpad, FingerprintReader, Touchscreen, Webcam, ExpansionBay, Detached_0, Detached_1, Detached_2, Detached_3];
-
-    /// <summary>
-    /// Gets the number of reported modules across all slot groups.
-    /// </summary>
-    public byte ModuleCount => (byte)(UsbCSlotCount + InputTopRowCount + DetachedCount + FixedModuleCount);
-
-    /// <summary>
-    /// Gets the reported module descriptors in index order.
-    /// </summary>
-    /// <seealso cref="ModuleCount"/>
-    public IEnumerable<FrameworkModuleDescriptorSnapshot> ReportedModules => ReportedUsbCSlots.Concat(ReportedInputTopRowModules).Concat(ReportedFixedModules).Concat(ReportedDetachedModules);
+    public byte ModuleCount { get; init; }
 
     public override string ToString()
     {
