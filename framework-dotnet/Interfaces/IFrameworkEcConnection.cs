@@ -259,15 +259,15 @@ public interface IFrameworkEcConnection : IDisposable
     /// <summary>
     /// Sets the battery charge limits.
     /// </summary>
-    /// <param name="minPercent">The minimum charge threshold (0–100) below which charging begins.</param>
-    /// <param name="maxPercent">The maximum charge threshold (0–100) above which charging stops.</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="minPercent"/> or <paramref name="maxPercent"/> is outside the 0–100 range.</exception>
+    /// <param name="minPercent">The minimum charge threshold (0–100%) below which charging begins.</param>
+    /// <param name="maxPercent">The maximum charge threshold (0–100%) above which charging stops.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="minPercent"/> or <paramref name="maxPercent"/> is outside the 0–100 percent range, or when <paramref name="minPercent"/> exceeds <paramref name="maxPercent"/>.</exception>
     /// <exception cref="ObjectDisposedException">Thrown when the connection has been disposed.</exception>
     /// <exception cref="FrameworkStatusException">Thrown when the native Framework library returns an error status.</exception>
     /// <exception cref="DllNotFoundException">Thrown when the native Framework library cannot be located.</exception>
     /// <exception cref="BadImageFormatException">Thrown when the native Framework library is incompatible with the current process architecture.</exception>
     /// <exception cref="EntryPointNotFoundException">Thrown when the required native entry point is unavailable.</exception>
-    void SetChargeLimits(byte minPercent, byte maxPercent);
+    void SetChargeLimits(Ratio minPercent, Ratio maxPercent);
 
     /// <summary>
     /// Sets the charge current limit, optionally conditioned on a battery state-of-charge threshold.

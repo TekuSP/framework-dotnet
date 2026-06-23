@@ -240,11 +240,18 @@ public sealed class FrameworkEcConnection : SafeHandleZeroOrMinusOneIsInvalid, I
     }
 
     /// <inheritdoc/>
-    public void SetChargeLimits(byte minPercent, byte maxPercent)
+    public void SetChargeLimits(Ratio minPercent, Ratio maxPercent)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(minPercent.Percent, 0, nameof(minPercent));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(minPercent.Percent, 100, nameof(minPercent));
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxPercent.Percent, 0, nameof(maxPercent));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(maxPercent.Percent, 100, nameof(maxPercent));
+        if (minPercent > maxPercent)
+            throw new ArgumentOutOfRangeException(nameof(minPercent), minPercent, "Minimum charge limit must not exceed the maximum.");
+
         unsafe
         {
-            Native.NativeMethods.framework_ec_set_charge_limits(HandlePointer, minPercent, maxPercent).ThrowIfFailure();
+            Native.NativeMethods.framework_ec_set_charge_limits(HandlePointer, (byte)minPercent.Percent, (byte)maxPercent.Percent).ThrowIfFailure();
         }
     }
 
