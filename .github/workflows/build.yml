@@ -143,7 +143,7 @@ jobs:
         path: artifacts/linux-arm64
 
     - name: Cache and restore nugets
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-${{ hashFiles('**/packages.lock.json') }}
