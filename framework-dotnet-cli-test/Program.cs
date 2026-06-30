@@ -199,6 +199,37 @@ internal class Program
                 }
             }
 
+            if (expansionBay.HasUsbCPort && expansionBay.UsbCPort is { } bayPort)
+            {
+                content.Append($", USB-C Port=[CState={bayPort.CState}, Role={bayPort.PowerRole}");
+
+                if (bayPort.HasPowerDeliveryContract)
+                {
+                    content.Append($", {bayPort.Voltage.ToString(CultureInfo.InvariantCulture)} @ {bayPort.Current.ToString(CultureInfo.InvariantCulture)}");
+                }
+
+                content.Append(']');
+
+                if (expansionBay.UsbCCapability is { } bayCapability)
+                {
+                    content.Append($", Capability=[{bayCapability.DataLane}");
+
+                    if (bayCapability.DisplayPort != FrameworkDisplayPortCapability.None)
+                    {
+                        content.Append($", DP={bayCapability.DisplayPort}");
+                    }
+
+                    if (bayCapability.SupportsPowerDelivery)
+                    {
+                        content.Append(bayCapability.MaxChargePower.Watts > 0
+                            ? $", Charging up to {bayCapability.MaxChargePower.ToString(CultureInfo.InvariantCulture)}"
+                            : ", Charging");
+                    }
+
+                    content.Append(']');
+                }
+            }
+
             if (!string.IsNullOrEmpty(expansionBay.SerialNumber))
             {
                 content.Append($", Serial={expansionBay.SerialNumber}");
@@ -248,6 +279,35 @@ internal class Program
             }
 
             content.Append(']');
+
+            FrameworkUsbCPortCapabilitySnapshot capability = slot.Capability;
+            if (capability.IsDocumented)
+            {
+                content.Append($", Capability=[{capability.DataLane}");
+
+                if (capability.DisplayPort != FrameworkDisplayPortCapability.None)
+                {
+                    content.Append($", DP={capability.DisplayPort}");
+                }
+
+                if (capability.SupportsPowerDelivery)
+                {
+                    content.Append(capability.MaxChargePower.Watts > 0
+                        ? $", Charging up to {capability.MaxChargePower.ToString(CultureInfo.InvariantCulture)}"
+                        : ", Charging");
+                }
+                else
+                {
+                    content.Append(", No PD charging (power-limited)");
+                }
+
+                if (capability.UsbAHighPowerDraw)
+                {
+                    content.Append(", USB-A high power");
+                }
+
+                content.Append(']');
+            }
 
             if (slot.Flags != FrameworkModuleFlags.None)
             {

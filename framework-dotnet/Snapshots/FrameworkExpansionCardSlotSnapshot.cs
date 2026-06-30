@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 
 using FrameworkDotnet.Enums;
 
@@ -25,7 +25,8 @@ public sealed record FrameworkExpansionCardSlotSnapshot
     /// <param name="powerDelivery">The full USB Power Delivery port state for this slot.</param>
     /// <param name="cardType">The identified card type.</param>
     /// <param name="cardConfidence">The confidence in the card-type identification.</param>
-    public FrameworkExpansionCardSlotSnapshot(FrameworkModuleIdentity identity, FrameworkModuleBus bus, FrameworkModuleSlotKind slotKind, FrameworkModuleConfidence confidence, bool isPresent, int slotIndex, FrameworkModuleFlags flags, uint vendorId, uint productId, int boardId, FrameworkPowerDeliveryPortStateSnapshot powerDelivery, FrameworkExpansionCardType cardType, FrameworkModuleConfidence cardConfidence)
+    /// <param name="capability">The static, board-defined USB-C capability of this slot.</param>
+    public FrameworkExpansionCardSlotSnapshot(FrameworkModuleIdentity identity, FrameworkModuleBus bus, FrameworkModuleSlotKind slotKind, FrameworkModuleConfidence confidence, bool isPresent, int slotIndex, FrameworkModuleFlags flags, uint vendorId, uint productId, int boardId, FrameworkPowerDeliveryPortStateSnapshot powerDelivery, FrameworkExpansionCardType cardType, FrameworkModuleConfidence cardConfidence, FrameworkUsbCPortCapabilitySnapshot capability)
     {
         Identity = identity;
         Bus = bus;
@@ -40,6 +41,7 @@ public sealed record FrameworkExpansionCardSlotSnapshot
         PowerDelivery = powerDelivery;
         CardType = cardType;
         CardConfidence = cardConfidence;
+        Capability = capability;
     }
 
     /// <summary>
@@ -107,8 +109,14 @@ public sealed record FrameworkExpansionCardSlotSnapshot
     /// </summary>
     public FrameworkModuleConfidence CardConfidence { get; init; }
 
+    /// <summary>
+    /// Gets the static, board-defined USB-C capability of this slot (data lane, DisplayPort version, charging),
+    /// independent of the live <see cref="PowerDelivery"/> negotiation.
+    /// </summary>
+    public FrameworkUsbCPortCapabilitySnapshot Capability { get; init; }
+
     public override string ToString()
     {
-        return $"Expansion Card Slot {SlotIndex.ToString(CultureInfo.InvariantCulture)}: Present: {IsPresent}, Card Type: {CardType}, Identity: {Identity}, Confidence: {Confidence}, Power Delivery: [{PowerDelivery}]";
+        return $"Expansion Card Slot {SlotIndex.ToString(CultureInfo.InvariantCulture)}: Present: {IsPresent}, Card Type: {CardType}, Identity: {Identity}, Confidence: {Confidence}, Capability: [{Capability}], Power Delivery: [{PowerDelivery}]";
     }
 }

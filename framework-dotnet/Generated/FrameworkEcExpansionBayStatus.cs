@@ -26,7 +26,12 @@ internal unsafe partial struct FrameworkEcExpansionBayStatus
                 ToManagedBoard(),
                 ToManagedVendor(),
                 ToManagedPcieConfiguration(),
-                serialNumber.ToUtf8String());
+                serialNumber.ToUtf8String())
+            {
+                HasUsbCPort = has_usb_c_port != 0,
+                UsbCPort = has_usb_c_port != 0 ? pd.ToManagedSnapshot() : null,
+                UsbCCapability = has_usb_c_port != 0 ? capability.ToManagedSnapshot() : null,
+            };
         }
         finally
         {

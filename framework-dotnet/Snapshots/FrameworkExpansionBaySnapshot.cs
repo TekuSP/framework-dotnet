@@ -85,6 +85,9 @@ public record FrameworkExpansionBaySnapshot
         Vendor = snapshot.Vendor;
         RawPcieConfiguration = snapshot.RawPcieConfiguration;
         SerialNumber = snapshot.SerialNumber;
+        HasUsbCPort = snapshot.HasUsbCPort;
+        UsbCPort = snapshot.UsbCPort;
+        UsbCCapability = snapshot.UsbCCapability;
     }
 
     /// <summary>
@@ -132,8 +135,26 @@ public record FrameworkExpansionBaySnapshot
     /// </summary>
     internal FrameworkExpansionBayPcieConfiguration RawPcieConfiguration { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether the installed bay module exposes a USB-C port (the Framework 16 graphics
+    /// modules do). When <see langword="true"/>, <see cref="UsbCPort"/> and <see cref="UsbCCapability"/> describe it.
+    /// </summary>
+    public bool HasUsbCPort { get; init; }
+
+    /// <summary>
+    /// Gets the live USB Power Delivery state of the bay module's USB-C port, or <see langword="null"/> when the
+    /// module has no USB-C port.
+    /// </summary>
+    public FrameworkPowerDeliveryPortStateSnapshot? UsbCPort { get; init; }
+
+    /// <summary>
+    /// Gets the static capability of the bay module's USB-C port, or <see langword="null"/> when the module has no
+    /// USB-C port.
+    /// </summary>
+    public FrameworkUsbCPortCapabilitySnapshot? UsbCCapability { get; init; }
+
     public override string ToString()
     {
-        return $"Expansion Bay Snapshot: Identity: {Identity}, Present: {IsPresent}, Enabled: {IsEnabled}, Fault: {HasFault}, Door Closed: {IsDoorClosed}, Board: {Board}, Vendor: {Vendor}, Serial Number: {SerialNumber}";
+        return $"Expansion Bay Snapshot: Identity: {Identity}, Present: {IsPresent}, Enabled: {IsEnabled}, Fault: {HasFault}, Door Closed: {IsDoorClosed}, Board: {Board}, Vendor: {Vendor}, USB-C Port: {HasUsbCPort}, Serial Number: {SerialNumber}";
     }
 }

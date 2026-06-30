@@ -21,7 +21,8 @@ internal unsafe partial struct FrameworkExpansionCardModuleDescriptor
             board_id,
             pd.ToManagedSnapshot(),
             ToManagedCardType(),
-            ToManagedCardConfidence());
+            ToManagedCardConfidence(),
+            capability.ToManagedSnapshot());
     }
 
     private readonly FrameworkDotnet.Enums.FrameworkModuleIdentity ToManagedIdentity()
