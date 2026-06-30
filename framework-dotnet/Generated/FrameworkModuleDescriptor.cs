@@ -18,7 +18,24 @@ internal unsafe partial struct FrameworkModuleDescriptor
             (FrameworkDotnet.Enums.FrameworkModuleFlags)flags,
             vendor_id,
             product_id,
-            board_id);
+            board_id,
+            ToManagedPosition());
+    }
+
+    private readonly FrameworkDotnet.Enums.FrameworkInputModulePosition ToManagedPosition()
+    {
+        return position switch
+        {
+            FrameworkInputModulePosition.Unknown => FrameworkDotnet.Enums.FrameworkInputModulePosition.Unknown,
+            FrameworkInputModulePosition.TopRow0 => FrameworkDotnet.Enums.FrameworkInputModulePosition.TopRow0,
+            FrameworkInputModulePosition.TopRow1 => FrameworkDotnet.Enums.FrameworkInputModulePosition.TopRow1,
+            FrameworkInputModulePosition.TopRow2 => FrameworkDotnet.Enums.FrameworkInputModulePosition.TopRow2,
+            FrameworkInputModulePosition.TopRow3 => FrameworkDotnet.Enums.FrameworkInputModulePosition.TopRow3,
+            FrameworkInputModulePosition.TopRow4 => FrameworkDotnet.Enums.FrameworkInputModulePosition.TopRow4,
+            FrameworkInputModulePosition.Touchpad => FrameworkDotnet.Enums.FrameworkInputModulePosition.Touchpad,
+            FrameworkInputModulePosition.HubBoard => FrameworkDotnet.Enums.FrameworkInputModulePosition.HubBoard,
+            _ => FrameworkDotnet.Enums.FrameworkInputModulePosition.Unknown,
+        };
     }
 
     private readonly FrameworkDotnet.Enums.FrameworkModuleIdentity ToManagedIdentity()

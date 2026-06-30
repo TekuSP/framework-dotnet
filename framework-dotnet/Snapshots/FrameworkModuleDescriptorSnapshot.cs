@@ -22,7 +22,8 @@ public sealed record FrameworkModuleDescriptorSnapshot
     /// <param name="vendorId">The observed vendor ID, when available.</param>
     /// <param name="productId">The observed product ID, when available.</param>
     /// <param name="boardId">The board-specific numeric identifier, when available.</param>
-    public FrameworkModuleDescriptorSnapshot(FrameworkModuleIdentity identity, FrameworkModuleBus bus, FrameworkModuleSlotKind slotKind, FrameworkModuleConfidence confidence, bool isPresent, int slotIndex, FrameworkModuleFlags flags, uint vendorId, uint productId, int boardId)
+    /// <param name="position">The physical input-deck position, when the module is input-deck-mounted.</param>
+    public FrameworkModuleDescriptorSnapshot(FrameworkModuleIdentity identity, FrameworkModuleBus bus, FrameworkModuleSlotKind slotKind, FrameworkModuleConfidence confidence, bool isPresent, int slotIndex, FrameworkModuleFlags flags, uint vendorId, uint productId, int boardId, FrameworkInputModulePosition position = FrameworkInputModulePosition.Unknown)
     {
         Identity = identity;
         Bus = bus;
@@ -34,6 +35,7 @@ public sealed record FrameworkModuleDescriptorSnapshot
         VendorId = vendorId;
         ProductId = productId;
         BoardId = boardId;
+        Position = position;
     }
 
     /// <summary>
@@ -86,8 +88,14 @@ public sealed record FrameworkModuleDescriptorSnapshot
     /// </summary>
     public int BoardId { get; init; }
 
+    /// <summary>
+    /// Gets the physical input-deck position (Framework Laptop 16), or
+    /// <see cref="FrameworkInputModulePosition.Unknown"/> for modules that are not input-deck-mounted.
+    /// </summary>
+    public FrameworkInputModulePosition Position { get; init; }
+
     public override string ToString()
     {
-        return $"Module Descriptor: Identity: {Identity}, Present: {IsPresent}, Slot Kind: {SlotKind}, Slot Index: {SlotIndex.ToString(CultureInfo.InvariantCulture)}, Bus: {Bus}, Confidence: {Confidence}, Flags: {Flags}, Vendor ID: 0x{VendorId.ToString("X", CultureInfo.InvariantCulture)}, Product ID: 0x{ProductId.ToString("X", CultureInfo.InvariantCulture)}, Board ID: {BoardId.ToString(CultureInfo.InvariantCulture)}";
+        return $"Module Descriptor: Identity: {Identity}, Present: {IsPresent}, Slot Kind: {SlotKind}, Slot Index: {SlotIndex.ToString(CultureInfo.InvariantCulture)}, Position: {Position}, Bus: {Bus}, Confidence: {Confidence}, Flags: {Flags}, Vendor ID: 0x{VendorId.ToString("X", CultureInfo.InvariantCulture)}, Product ID: 0x{ProductId.ToString("X", CultureInfo.InvariantCulture)}, Board ID: {BoardId.ToString(CultureInfo.InvariantCulture)}";
     }
 }
