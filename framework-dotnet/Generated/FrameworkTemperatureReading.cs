@@ -16,6 +16,6 @@ internal unsafe partial struct FrameworkTemperatureReading
 
     internal readonly FrameworkTemperatureSnapshot ToManagedSnapshot()
     {
-        return new FrameworkTemperatureSnapshot((FrameworkDotnet.Enums.FrameworkTemperatureState)(int)state, Temperature.FromDegreesCelsius(celsius));
+        return new FrameworkTemperatureSnapshot((FrameworkDotnet.Enums.FrameworkTemperatureState)(int)state, Temperature.FromDegreesCelsius(celsius), (FrameworkDotnet.Enums.FrameworkSensorName)(ushort)name);
     }
 }

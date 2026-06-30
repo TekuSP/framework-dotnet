@@ -16,10 +16,12 @@ public sealed record FrameworkTemperatureSnapshot
     /// </summary>
     /// <param name="state">The reading state.</param>
     /// <param name="temperature">The temperature reading.</param>
-    public FrameworkTemperatureSnapshot(FrameworkTemperatureState state, Temperature temperature)
+    /// <param name="name">The platform role name of the sensor.</param>
+    public FrameworkTemperatureSnapshot(FrameworkTemperatureState state, Temperature temperature, FrameworkSensorName name)
     {
         State = state;
         Temperature = temperature;
+        Name = name;
     }
 
     /// <summary>
@@ -32,8 +34,14 @@ public sealed record FrameworkTemperatureSnapshot
     /// </summary>
     public Temperature Temperature { get; init; }
 
+    /// <summary>
+    /// Gets the platform role name of the sensor (e.g. CPU, APU, DDR), or
+    /// <see cref="FrameworkSensorName.Generic"/> / <see cref="FrameworkSensorName.Unknown"/> when not identified.
+    /// </summary>
+    public FrameworkSensorName Name { get; init; }
+
     public override string ToString()
     {
-        return $"Temperature Snapshot: State: {State}, Temperature: {Temperature.ToString(CultureInfo.InvariantCulture)}";
+        return $"Temperature Snapshot: Name: {Name}, State: {State}, Temperature: {Temperature.ToString(CultureInfo.InvariantCulture)}";
     }
 }
