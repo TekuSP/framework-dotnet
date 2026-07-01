@@ -14,7 +14,24 @@ internal unsafe partial struct FrameworkUsbCPortCapability
             ToManagedDisplayPort(),
             supports_pd != 0,
             Power.FromWatts(max_charge_watts),
-            usb_a_high_power != 0);
+            usb_a_high_power != 0,
+            ToManagedPosition());
+    }
+
+    private readonly FrameworkDotnet.Enums.FrameworkUsbCPortPosition ToManagedPosition()
+    {
+        return position switch
+        {
+            FrameworkUsbCPortPosition.Unknown => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.Unknown,
+            FrameworkUsbCPortPosition.RightBack => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.RightBack,
+            FrameworkUsbCPortPosition.RightMiddle => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.RightMiddle,
+            FrameworkUsbCPortPosition.RightFront => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.RightFront,
+            FrameworkUsbCPortPosition.LeftMiddle => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.LeftMiddle,
+            FrameworkUsbCPortPosition.LeftFront => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.LeftFront,
+            FrameworkUsbCPortPosition.LeftBack => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.LeftBack,
+            FrameworkUsbCPortPosition.GraphicsModule => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.GraphicsModule,
+            _ => FrameworkDotnet.Enums.FrameworkUsbCPortPosition.Unknown,
+        };
     }
 
     private readonly FrameworkDotnet.Enums.FrameworkUsbCDataLane ToManagedDataLane()

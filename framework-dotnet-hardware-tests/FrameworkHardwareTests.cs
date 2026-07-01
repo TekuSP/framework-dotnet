@@ -216,6 +216,54 @@ public sealed class FrameworkHardwareTests
     }
 
     [Test]
+    [Description("Framework 16 exposes 4 mainboard USB-C PD ports; a graphics module adds a 5th (4 + GPU = 5).")]
+    public void ModuleInventory_Framework16_ReportsFourMainboardPdPortsPlusGraphicsModule()
+    {
+        if (frameworkSystem.GetPlatformFamily() != FrameworkPlatformFamily.Framework16)
+        {
+            Assert.Ignore("This test only applies to the Framework Laptop 16.");
+        }
+
+        var inventory = ec.GetModuleInventorySnapshot();
+
+        // Upstream framework-system exposes exactly 4 EC PD ports on the mainboard; the six physical bays mux onto
+        // them (power.rs: `let ports = 4`).
+        Assert.That(inventory.UsbCSlotCount, Is.EqualTo(4), "Framework 16 exposes 4 mainboard PD ports.");
+        var mainboardPorts = inventory.ReportedUsbCSlots.ToList();
+        Assert.That(mainboardPorts, Has.Count.EqualTo(4));
+
+        foreach (var port in mainboardPorts)
+        {
+            Assert.That(port.Capability.IsDocumented, Is.True, $"Port {port.SlotIndex} should have a documented capability.");
+            Assert.That(port.Capability.Position, Is.Not.EqualTo(FrameworkUsbCPortPosition.Unknown), $"Port {port.SlotIndex} should have a known position.");
+            Assert.That(port.Capability.PositionName, Is.Not.Empty);
+        }
+
+        // Upstream index order: 0 Right Back, 1 Right Middle, 2 Left Middle, 3 Left Back; ports 2 & 3 are on the left.
+        Assert.That(inventory.UsbCSlot_0.Capability.Position, Is.EqualTo(FrameworkUsbCPortPosition.RightBack));
+        Assert.That(inventory.UsbCSlot_1.Capability.Position, Is.EqualTo(FrameworkUsbCPortPosition.RightMiddle));
+        Assert.That(inventory.UsbCSlot_2.Capability.Position, Is.EqualTo(FrameworkUsbCPortPosition.LeftMiddle));
+        Assert.That(inventory.UsbCSlot_3.Capability.Position, Is.EqualTo(FrameworkUsbCPortPosition.LeftBack));
+        Assert.That(inventory.UsbCSlot_2.Capability.IsLeftSide, Is.True);
+        Assert.That(inventory.UsbCSlot_0.Capability.IsLeftSide, Is.False);
+
+        // A graphics module adds a 5th PD port (its rear USB-C port).
+        var expansionBay = ec.GetExpansionBaySnapshot();
+        var totalPdPorts = inventory.UsbCSlotCount + (expansionBay.HasUsbCPort ? 1 : 0);
+        if (expansionBay.HasUsbCPort)
+        {
+            Assert.That(expansionBay.UsbCCapability, Is.Not.Null);
+            Assert.That(expansionBay.UsbCCapability!.Position, Is.EqualTo(FrameworkUsbCPortPosition.GraphicsModule));
+            Assert.That(totalPdPorts, Is.EqualTo(5), "4 mainboard PD ports + 1 graphics-module port = 5.");
+        }
+        else
+        {
+            Assert.That(totalPdPorts, Is.EqualTo(4), "Without a graphics module, Framework 16 exposes 4 PD ports.");
+            Assert.Warn("No graphics module detected; a Framework 16 with a dGPU should report 5 (4 + GPU).");
+        }
+    }
+
+    [Test]
     public void ExpansionBayModulesSnapshot_ShouldReturnExpectedInformationOrReportUnavailable()
     {
         AssertOptionalReadback(

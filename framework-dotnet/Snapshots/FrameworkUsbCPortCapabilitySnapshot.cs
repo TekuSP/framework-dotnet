@@ -23,7 +23,8 @@ public sealed record FrameworkUsbCPortCapabilitySnapshot
     /// <param name="supportsPowerDelivery">Whether the slot supports USB Power Delivery charging.</param>
     /// <param name="maxChargePower">The maximum charge power, or zero when undocumented / not a charging port.</param>
     /// <param name="usbAHighPowerDraw">Whether the "higher power consumption" USB-A note applies to this slot.</param>
-    public FrameworkUsbCPortCapabilitySnapshot(bool isDocumented, FrameworkUsbCDataLane dataLane, FrameworkDisplayPortCapability displayPort, bool supportsPowerDelivery, Power maxChargePower, bool usbAHighPowerDraw)
+    /// <param name="position">The physical position of this PD port (Right Back, Left Middle, Graphics module, …).</param>
+    public FrameworkUsbCPortCapabilitySnapshot(bool isDocumented, FrameworkUsbCDataLane dataLane, FrameworkDisplayPortCapability displayPort, bool supportsPowerDelivery, Power maxChargePower, bool usbAHighPowerDraw, FrameworkUsbCPortPosition position)
     {
         IsDocumented = isDocumented;
         DataLane = dataLane;
@@ -31,6 +32,7 @@ public sealed record FrameworkUsbCPortCapabilitySnapshot
         SupportsPowerDelivery = supportsPowerDelivery;
         MaxChargePower = maxChargePower;
         UsbAHighPowerDraw = usbAHighPowerDraw;
+        Position = position;
     }
 
     /// <summary>
@@ -66,8 +68,35 @@ public sealed record FrameworkUsbCPortCapabilitySnapshot
     /// </summary>
     public bool UsbAHighPowerDraw { get; init; }
 
+    /// <summary>
+    /// Gets the physical position of this PD port (upstream framework-system numbering).
+    /// </summary>
+    public FrameworkUsbCPortPosition Position { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the port is on the left side of the chassis. Mirrors upstream
+    /// framework-system, where PD ports 2 &amp; 3 are on the left (<c>power.rs</c> <c>check_ac</c>).
+    /// </summary>
+    public bool IsLeftSide => Position is FrameworkUsbCPortPosition.LeftMiddle or FrameworkUsbCPortPosition.LeftFront or FrameworkUsbCPortPosition.LeftBack;
+
+    /// <summary>
+    /// Gets the human-readable position name (e.g. "Right Back", "Left Middle", "Graphics module"), or an empty
+    /// string when the position is <see cref="FrameworkUsbCPortPosition.Unknown"/>.
+    /// </summary>
+    public string PositionName => Position switch
+    {
+        FrameworkUsbCPortPosition.RightBack => "Right Back",
+        FrameworkUsbCPortPosition.RightMiddle => "Right Middle",
+        FrameworkUsbCPortPosition.RightFront => "Right Front",
+        FrameworkUsbCPortPosition.LeftMiddle => "Left Middle",
+        FrameworkUsbCPortPosition.LeftFront => "Left Front",
+        FrameworkUsbCPortPosition.LeftBack => "Left Back",
+        FrameworkUsbCPortPosition.GraphicsModule => "Graphics module",
+        _ => string.Empty,
+    };
+
     public override string ToString()
     {
-        return $"USB-C Capability: Documented: {IsDocumented}, Data Lane: {DataLane}, DisplayPort: {DisplayPort}, Supports PD: {SupportsPowerDelivery}, Max Charge: {MaxChargePower.ToString(CultureInfo.InvariantCulture)}, USB-A High Power: {UsbAHighPowerDraw}";
+        return $"USB-C Capability: Position: {Position}, Documented: {IsDocumented}, Data Lane: {DataLane}, DisplayPort: {DisplayPort}, Supports PD: {SupportsPowerDelivery}, Max Charge: {MaxChargePower.ToString(CultureInfo.InvariantCulture)}, USB-A High Power: {UsbAHighPowerDraw}";
     }
 }
