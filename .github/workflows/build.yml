@@ -50,18 +50,17 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup Rust with Cache
+    # Caching deliberately OFF (2026-07-23): the Rust workspace caches were multi-GB per key and
+    # burned the repo's Actions cache/storage quota. cache: false is required explicitly - this
+    # action caches BY DEFAULT even without cache-workspaces.
+    - name: Setup Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        cache-workspaces: |
-          framework-system-ffi-extensions -> target
+        cache: false
 
-    - name: Install with Cache Linux Framework dependencies (libudev-dev)
-      uses: awalsh128/cache-apt-pkgs-action@v1
+    - name: Install Linux Framework dependencies (libudev-dev)
       if: runner.os == 'Linux'
-      with:
-        packages: libudev-dev
-        version: ${{ runner.os }}-${{ runner.arch }}
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libudev-dev
 
     - name: Build native library
       run: cargo build --manifest-path framework-system-ffi-extensions/Cargo.toml -p framework_lib_ffi --release
@@ -72,6 +71,7 @@ jobs:
         name: framework-dotnet-native-${{ matrix.platform }}
         path: ${{ matrix.artifactPath }}
         if-no-files-found: error
+        retention-days: 1
 
     - name: Upload generated bindings artifact
       if: matrix.platform == 'win-x64'
@@ -80,6 +80,7 @@ jobs:
         name: framework-dotnet-bindings
         path: framework-system-ffi-extensions/csharp/NativeMethods.g.cs
         if-no-files-found: error
+        retention-days: 1
 
     - name: "Cancel if failure"
       if: ${{ failure() }}
@@ -142,14 +143,6 @@ jobs:
         name: framework-dotnet-native-linux-arm64
         path: artifacts/linux-arm64
 
-    - name: Cache and restore nugets
-      uses: actions/cache@v6
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-${{ hashFiles('**/packages.lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-nuget-${{ github.workflow }}-${{ github.ref }}-
-
     - name: Restore dependencies
       run: dotnet restore -v normal --locked-mode -p:Version=${{ steps.current-version.outputs.oldVersion }}-preview.${{ github.run_number }} -p:InformationalVersion=${{ steps.current-version.outputs.oldVersion }}-preview.${{ github.run_number }}+${{ github.sha }} -p:DebugSymbols=true -p:DebugType=portable
 
@@ -195,6 +188,7 @@ jobs:
         name: framework-dotnet-nuget
         path: ${{ env.ARTIFACT_OUTPUT }}
         if-no-files-found: error
+        retention-days: 1
     - name: Push nugets to Github
       if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/Release/') }}
       run: |
