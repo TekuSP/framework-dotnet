@@ -13,8 +13,53 @@ namespace FrameworkDotnet.Interfaces;
 /// <summary>
 /// Defines a safe embedded controller connection.
 /// </summary>
+/// <remarks>
+/// The members declared directly on this interface cover firmware, power, thermal and fan control. The
+/// remainder of the embedded controller surface is grouped into facets reached through the properties
+/// below. Every facet borrows this connection's handle and must not be used after it is disposed.
+/// </remarks>
 public interface IFrameworkEcConnection : IDisposable
 {
+    /// <summary>
+    /// Gets the diagnostic surface: liveness, protocol and system information, saved panic data,
+    /// port 80 history, switch positions, throttle status, raw ADC channels and host command probing.
+    /// </summary>
+    IFrameworkEcDiagnostics Diagnostics { get; }
+
+    /// <summary>
+    /// Gets the general-purpose I/O surface, which reads, writes and enumerates embedded controller GPIO lines.
+    /// </summary>
+    IFrameworkEcGpio Gpio { get; }
+
+    /// <summary>
+    /// Gets the thermal control surface: per-sensor threshold configuration, sensor identity and the
+    /// authoritative fan count. Live temperature and fan readings come from <see cref="GetThermalSnapshot"/>.
+    /// </summary>
+    IFrameworkEcThermalControl Thermal { get; }
+
+    /// <summary>
+    /// Gets the battery surface: the Smart Battery data set, pack authentication, cutoff state,
+    /// charging state and the charge rate limit.
+    /// </summary>
+    IFrameworkEcBattery Battery { get; }
+
+    /// <summary>
+    /// Gets the USB Power Delivery surface: controller firmware versions, per-port charger negotiation
+    /// state and the retimer firmware version.
+    /// </summary>
+    IFrameworkEcPowerDelivery PowerDelivery { get; }
+
+    /// <summary>
+    /// Gets the input device surface: per-key RGB lighting, keyboard matrix remapping, PS/2 emulation
+    /// and fine-grained fingerprint LED brightness.
+    /// </summary>
+    IFrameworkEcInput Input { get; }
+
+    /// <summary>
+    /// Gets the power management surface: hibernate delay, standalone mode and the expansion-bay GPU serial.
+    /// </summary>
+    IFrameworkEcPowerManagement PowerManagement { get; }
+
     /// <summary>
     /// Gets the active driver for the current connection.
     /// </summary>

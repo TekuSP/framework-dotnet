@@ -106,7 +106,7 @@ while (true)
 
 ## Public API at a glance
 
-The current public API is centered around two main entry points:
+The current public API is centered around three main entry points:
 
 - `FrameworkSystem`
   - detects platform and product information
@@ -115,6 +115,26 @@ The current public API is centered around two main entry points:
 - `IFrameworkEcConnection`
   - reads firmware, power, fan capability, and thermal snapshots
   - sends fan control commands
+  - exposes the rest of the EC surface through the facets below
+- `FrameworkPeripherals`
+  - reads stylus battery, camera, input module, USB hub, audio card and NVMe firmware versions
+  - controls the touchscreen and touchpad, which talk to HID/USB directly rather than through the EC
+
+The EC facets, reached as properties on `IFrameworkEcConnection`:
+
+| Facet | Covers |
+| --- | --- |
+| `Diagnostics` | liveness (`hello`), protocol info, sysinfo, saved panic data, port 80 history, switch positions, AP throttle status, raw ADC channels, host command probing |
+| `Gpio` | reads, writes and enumerates embedded controller GPIO lines |
+| `Thermal` | per-sensor thresholds, EC-reported sensor names, authoritative fan count |
+| `Battery` | Smart Battery data set, pack authentication, cutoff (ship mode) state, charging state, charge rate limit |
+| `PowerDelivery` | PD controller firmware versions, per-port charger negotiation state, retimer version |
+| `Input` | per-key RGB, keyboard matrix remapping, PS/2 emulation, fingerprint LED brightness |
+| `PowerManagement` | hibernate delay, standalone (batteryless) mode, expansion-bay GPU serial |
+
+Two calls are deliberately expensive and must not be polled: `Battery.GetSmartBatterySnapshot()`
+performs many I2C round trips, and `FrameworkPeripherals.GetAudioCardVersion()` claims the HID
+interface for up to a few seconds. Read both on demand only.
 
 Main snapshot types:
 
@@ -213,6 +233,7 @@ Public API methods throw specific managed exception types rather than requiring 
 Examples include:
 
 - `FrameworkEcResponseException` and its derived EC response exceptions
+- `FrameworkNotSupportedStatusException`, raised when a capability is not compiled in for the current platform. This is permanent, unlike `FrameworkDataUnavailableStatusException`, which signals a transient read failure. NVMe version readback on non-Linux hosts is the current case.
 - `FrameworkInvalidFanIndexException`
 - `FrameworkBatteryStateException` and derived battery state exceptions
 - `FrameworkTemperatureStateException` and derived temperature state exceptions
@@ -269,5 +290,9 @@ This project is an independent community project and is not affiliated with, end
 ## Current limitations
 
 - The managed API currently infers `FrameworkThermalSnapshot.SensorCount` because the Rust layer does not yet provide a dedicated sensor count value.
+- There is no max-fan-RPM reader. `Thermal.GetThresholds(...)` reports `FanOff` and `FanMax` as the *temperature* setpoints at which the EC starts and maxes active cooling; they are not RPM limits, and the EC fan table ceiling stays firmware-enforced.
+- Touchpad haptic intensity and click force are write-only. The firmware never answers `GET_FEATURE`, so they cannot be read back.
+- There is no GPU serial write path, by design. `PowerManagement.GetGpuSerial()` is read-only because programming a serial changes persistent expansion-bay identity.
+- `Input.RemapCapsLockToControl()` targets the Framework Laptop 12 matrix position. The keyboard matrix differs per model, so Framework Laptop 13 needs `Input.RemapKey(4, 4, 0x0014)` instead, and the Framework Laptop 16 keyboard is not EC-remappable.
 - The public fixed-slot snapshot members intentionally mirror the current native Rust struct layout.
 - Some command responses still echo request identity such as `FanIndex` for clarity and traceability.

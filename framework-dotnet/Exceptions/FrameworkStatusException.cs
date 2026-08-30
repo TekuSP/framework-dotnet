@@ -59,6 +59,8 @@ public class FrameworkStatusException : FrameworkException
                 return new FrameworkUnknownResponseCodeStatusException();
             case Framework.System.Interop.FrameworkStatusCode.DataUnavailable:
                 return new FrameworkDataUnavailableStatusException();
+            case Framework.System.Interop.FrameworkStatusCode.NotSupported:
+                return new FrameworkNotSupportedStatusException();
             default:
                 throw new ArgumentOutOfRangeException(nameof(statusCode), statusCode, "Unhandled status code.");
         }

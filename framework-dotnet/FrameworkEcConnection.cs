@@ -23,7 +23,39 @@ public sealed class FrameworkEcConnection : SafeHandleZeroOrMinusOneIsInvalid, I
     private FrameworkEcConnection()
         : base(true)
     {
+        // The facets borrow the handle through this accessor rather than capturing it, so every
+        // facet call runs the same disposal check the members on this type do.
+        Func<IntPtr> handleAccessor = GetHandlePointer;
+
+        Diagnostics = new Ec.FrameworkEcDiagnostics(handleAccessor);
+        Gpio = new Ec.FrameworkEcGpio(handleAccessor);
+        Thermal = new Ec.FrameworkEcThermalControl(handleAccessor);
+        Battery = new Ec.FrameworkEcBattery(handleAccessor);
+        PowerDelivery = new Ec.FrameworkEcPowerDelivery(handleAccessor);
+        Input = new Ec.FrameworkEcInput(handleAccessor);
+        PowerManagement = new Ec.FrameworkEcPowerManagement(handleAccessor);
     }
+
+    /// <inheritdoc/>
+    public IFrameworkEcDiagnostics Diagnostics { get; }
+
+    /// <inheritdoc/>
+    public IFrameworkEcGpio Gpio { get; }
+
+    /// <inheritdoc/>
+    public IFrameworkEcThermalControl Thermal { get; }
+
+    /// <inheritdoc/>
+    public IFrameworkEcBattery Battery { get; }
+
+    /// <inheritdoc/>
+    public IFrameworkEcPowerDelivery PowerDelivery { get; }
+
+    /// <inheritdoc/>
+    public IFrameworkEcInput Input { get; }
+
+    /// <inheritdoc/>
+    public IFrameworkEcPowerManagement PowerManagement { get; }
 
     /// <inheritdoc/>
     public FrameworkEcDriver GetActiveDriver()
@@ -436,5 +468,10 @@ public sealed class FrameworkEcConnection : SafeHandleZeroOrMinusOneIsInvalid, I
             ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
             return (Native.FrameworkEcHandle*)handle;
         }
+    }
+
+    private unsafe IntPtr GetHandlePointer()
+    {
+        return (IntPtr)HandlePointer;
     }
 }

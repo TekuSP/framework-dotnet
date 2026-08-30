@@ -23,7 +23,14 @@ internal class Program
         try
         {
             FrameworkSystem frameworkSystem = new FrameworkSystem();
+            FrameworkPeripherals peripherals = new FrameworkPeripherals();
             using IFrameworkEcConnection ec = frameworkSystem.OpenDefaultEc();
+
+            // Read the expensive surfaces once rather than on every refresh. The Smart Battery data
+            // set costs many I2C round trips, and the audio card query claims the HID interface for
+            // up to a few seconds; neither belongs in a polling loop.
+            AnsiConsole.MarkupLine("[grey]Reading one-time diagnostics (Smart Battery and peripheral firmware)...[/]");
+            string oneTimeReport = BuildOneTimeReport(ec, peripherals);
 
             while (true)
             {
@@ -49,6 +56,40 @@ internal class Program
                 WritePanel(CreateOptionalPanel("[bold green]Expansion Bay[/]", Color.Green, () => FormatSimpleSnapshot(ec.GetExpansionBaySnapshot())));
                 WritePanel(CreateOptionalPanel("[bold green]Expansion Bay Modules[/]", Color.Green, () => FormatExpansionBayModules(ec.GetExpansionBayModulesSnapshot())));
                 WritePanel(CreateOptionalPanel("[bold blue]Module Inventory[/]", Color.Blue, () => FormatModuleInventory(ec.GetModuleInventorySnapshot())));
+
+                // Diagnostics facet.
+                WritePanel(CreateOptionalPanel("[bold cyan]EC Switches[/]", Color.Cyan, () => FormatSimpleSnapshot(ec.Diagnostics.GetSwitches())));
+                WritePanel(CreateOptionalPanel("[bold cyan]EC System Info[/]", Color.Cyan, () => FormatSimpleSnapshot(ec.Diagnostics.GetSystemInfo())));
+                WritePanel(CreateOptionalPanel("[bold cyan]EC Protocol Info[/]", Color.Cyan, () => FormatSimpleSnapshot(ec.Diagnostics.GetProtocolInfo())));
+                WritePanel(CreateOptionalPanel("[bold cyan]EC Liveness[/]", Color.Cyan, () => FormatSimpleSnapshot(ec.Diagnostics.CheckHello())));
+                WritePanel(CreateOptionalPanel("[bold red]AP Throttle Status[/]", Color.Red, () => FormatSimpleSnapshot(ec.Diagnostics.GetApThrottleStatus())));
+                WritePanel(CreateOptionalPanel("[bold yellow]Port 80 History[/]", Color.Yellow, () => FormatPort80History(ec.Diagnostics.GetPort80History())));
+                WritePanel(CreateOptionalPanel("[bold red]EC Panic Info[/]", Color.Red, () => FormatSimpleSnapshot(ec.Diagnostics.GetPanicInfo())));
+
+                // Thermal control facet.
+                WritePanel(CreateOptionalPanel("[bold red]Thermal Thresholds[/]", Color.Red, () => FormatThermalThresholds(ec)));
+
+                // Battery facet.
+                WritePanel(CreateOptionalPanel("[bold green]Charging State[/]", Color.Green, () => FormatSimpleSnapshot(ec.Battery.GetChargingState())));
+                WritePanel(CreateOptionalPanel("[bold green]Battery Cutoff[/]", Color.Green, () => $"Cutoff State: {ec.Battery.GetCutoffState()}"));
+
+                // Power Delivery facet.
+                WritePanel(CreateOptionalPanel("[bold magenta]PD Controller Versions[/]", Color.Magenta, () => FormatSimpleSnapshot(ec.PowerDelivery.GetControllerVersions())));
+                WritePanel(CreateOptionalPanel("[bold magenta]PD Charger Info[/]", Color.Magenta, () => FormatPowerDeliveryPorts(ec)));
+                WritePanel(CreateOptionalPanel("[bold magenta]Retimer Version[/]", Color.Magenta, () => FormatSimpleSnapshot(ec.PowerDelivery.GetRetimerVersion())));
+
+                // Power management facet.
+                WritePanel(CreateOptionalPanel("[bold blue]Hibernate Delay[/]", Color.Blue, () => $"Hibernate Delay: {ec.PowerManagement.GetHibernateDelay()}"));
+                WritePanel(CreateOptionalPanel("[bold blue]Standalone Mode[/]", Color.Blue, () => FormatSimpleSnapshot(ec.PowerManagement.GetStandaloneMode())));
+                WritePanel(CreateOptionalPanel("[bold blue]Expansion Bay GPU Serial[/]", Color.Blue, () => $"GPU Serial: {ec.PowerManagement.GetGpuSerial()}"));
+
+                // GPIO facet.
+                WritePanel(CreateOptionalPanel("[bold yellow]GPIO[/]", Color.Yellow, () => FormatGpio(ec)));
+
+                // Peripherals (no EC handle - HID/USB direct).
+                WritePanel(CreateOptionalPanel("[bold green]Stylus Battery[/]", Color.Green, () => FormatSimpleSnapshot(peripherals.GetStylusBattery())));
+
+                WritePanel(CreatePanel("[bold grey]One-Time Diagnostics[/]", Color.Grey, oneTimeReport));
 
                 Thread.Sleep(RefreshInterval);
             }
@@ -119,6 +160,154 @@ internal class Program
     {
         AnsiConsole.Write(panel);
         AnsiConsole.WriteLine();
+    }
+
+    /// <summary>
+    /// Reads the surfaces that are too expensive to poll. The Smart Battery data set costs many I2C
+    /// round trips, and the audio card query claims the HID interface for up to a few seconds.
+    /// </summary>
+    private static string BuildOneTimeReport(IFrameworkEcConnection ec, IFrameworkPeripherals peripherals)
+    {
+        var content = new StringBuilder();
+
+        AppendOneTimeSection(content, "Smart Battery", () => FormatSimpleSnapshot(ec.Battery.GetSmartBatterySnapshot()));
+        AppendOneTimeSection(content, "Camera Firmware", () => FormatSimpleSnapshot(peripherals.GetCameraVersions()));
+        AppendOneTimeSection(content, "Input Module Firmware", () => FormatSimpleSnapshot(peripherals.GetInputModuleVersions()));
+        AppendOneTimeSection(content, "USB Hub Firmware", () => FormatSimpleSnapshot(peripherals.GetUsbHubVersions()));
+        AppendOneTimeSection(content, "Audio Card Firmware", () => FormatSimpleSnapshot(peripherals.GetAudioCardVersion()));
+
+        return content.ToString().TrimEnd();
+    }
+
+    private static void AppendOneTimeSection(StringBuilder content, string title, Func<string> contentFactory)
+    {
+        content.AppendLine($"{title}:");
+
+        try
+        {
+            content.AppendLine(contentFactory());
+        }
+        catch (FrameworkNotSupportedStatusException)
+        {
+            content.AppendLine("  Not supported on this platform.");
+        }
+        catch (FrameworkDataUnavailableStatusException)
+        {
+            content.AppendLine("  Unavailable on this device.");
+        }
+        catch (FrameworkException ex)
+        {
+            content.AppendLine($"  Framework error: {ex.Message}");
+        }
+
+        content.AppendLine();
+    }
+
+    private static string FormatPort80History(FrameworkEcPort80HistorySnapshot history)
+    {
+        var content = new StringBuilder();
+        content.AppendLine($"Writes: {history.Writes.ToString(CultureInfo.InvariantCulture)}");
+        content.AppendLine($"History Size: {history.HistorySize.ToString(CultureInfo.InvariantCulture)}");
+        content.AppendLine($"Newest Index: {history.NewestIndex.ToString(CultureInfo.InvariantCulture)}");
+
+        if (history.CodesNewestFirst.Count == 0)
+        {
+            content.Append("No POST codes recorded.");
+            return content.ToString();
+        }
+
+        content.AppendLine();
+        content.AppendLine("Newest first (first 16):");
+
+        foreach (ushort code in history.CodesNewestFirst.Take(16))
+        {
+            string marker = Enum.IsDefined((FrameworkPort80Event)code)
+                ? $" <-- {(FrameworkPort80Event)code}"
+                : string.Empty;
+
+            content.AppendLine($"  0x{code.ToString("X4", CultureInfo.InvariantCulture)}{marker}");
+        }
+
+        return content.ToString().TrimEnd();
+    }
+
+    private static string FormatThermalThresholds(IFrameworkEcConnection ec)
+    {
+        FrameworkThermalSnapshot thermal = ec.GetThermalSnapshot();
+        var content = new StringBuilder();
+
+        content.AppendLine($"EC Fan Count: {ec.Thermal.GetFanCount().ToString(CultureInfo.InvariantCulture)}");
+        content.AppendLine();
+
+        for (byte sensorIndex = 0; sensorIndex < thermal.SensorCount; sensorIndex++)
+        {
+            content.Append($"Sensor {sensorIndex.ToString(CultureInfo.InvariantCulture)}");
+
+            try
+            {
+                FrameworkTemperatureSensorNameSnapshot name = ec.Thermal.GetSensorName(sensorIndex);
+                content.Append($" ({name.FirmwareName} -> {name.MappedName}, {name.SensorType})");
+            }
+            catch (FrameworkException)
+            {
+                // The firmware does not name this slot; the thresholds below are still meaningful.
+            }
+
+            content.AppendLine(":");
+
+            try
+            {
+                content.AppendLine($"  {FormatSimpleSnapshot(ec.Thermal.GetThresholds(sensorIndex)).Replace(Environment.NewLine, Environment.NewLine + "  ")}");
+            }
+            catch (FrameworkException ex)
+            {
+                content.AppendLine($"  Unavailable: {ex.Message}");
+            }
+        }
+
+        return content.ToString().TrimEnd();
+    }
+
+    private static string FormatPowerDeliveryPorts(IFrameworkEcConnection ec)
+    {
+        var content = new StringBuilder();
+        FrameworkModuleInventorySnapshot inventory = ec.GetModuleInventorySnapshot();
+
+        for (int port = 0; port < inventory.UsbCSlotCount; port++)
+        {
+            try
+            {
+                content.AppendLine($"Port {port.ToString(CultureInfo.InvariantCulture)}: {ec.PowerDelivery.GetPowerInfo(port)}");
+            }
+            catch (FrameworkException ex)
+            {
+                content.AppendLine($"Port {port.ToString(CultureInfo.InvariantCulture)}: {ex.Message}");
+            }
+        }
+
+        return content.Length == 0 ? "No USB-C ports reported." : content.ToString().TrimEnd();
+    }
+
+    private static string FormatGpio(IFrameworkEcConnection ec)
+    {
+        IReadOnlyList<FrameworkEcGpioSnapshot> lines = ec.Gpio.GetAll();
+        var content = new StringBuilder();
+
+        content.AppendLine($"GPIO Count: {lines.Count.ToString(CultureInfo.InvariantCulture)}");
+
+        if (lines.Count == 0)
+        {
+            return content.ToString().TrimEnd();
+        }
+
+        content.AppendLine();
+
+        foreach (FrameworkEcGpioSnapshot line in lines)
+        {
+            content.AppendLine($"  {line}");
+        }
+
+        return content.ToString().TrimEnd();
     }
 
     private static string FormatSimpleSnapshot(object snapshot)

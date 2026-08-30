@@ -1,4 +1,5 @@
 ﻿using FrameworkDotnet.Enums;
+using FrameworkDotnet.Exceptions;
 using FrameworkDotnet.Exceptions.EcResponseDetails;
 using FrameworkDotnet.Exceptions.StatusCodes;
 using FrameworkDotnet.Interfaces;
@@ -480,6 +481,398 @@ public sealed class FrameworkHardwareTests
         }
     }
 
+    [Test]
+    [Description("Port 80 ordering is pure decode logic, so it is verified without hardware. Writes is the NEXT slot the EC will write, so the newest entry is the slot before it.")]
+    public void Port80History_NewestEntry_IsTheSlotBeforeTheWriteCursor()
+    {
+        // A wrapped ring: 10 writes into a 4-entry buffer. The cursor sits at 10 % 4 == 2, so the
+        // newest code is at index 1 and the walk backwards is 1, 0, 3, 2.
+        var wrapped = new FrameworkEcPort80HistorySnapshot(10, 4, [0xAA, 0xBB, 0xCC, 0xDD]);
+
+        Assert.That(wrapped.NewestIndex, Is.EqualTo(1));
+        Assert.That(wrapped.CodesNewestFirst, Is.EqualTo(new ushort[] { 0xBB, 0xAA, 0xDD, 0xCC }).AsCollection);
+
+        // A partially filled ring reports only the slots that were actually written.
+        var partial = new FrameworkEcPort80HistorySnapshot(2, 4, [0xAA, 0xBB, 0x00, 0x00]);
+
+        Assert.That(partial.NewestIndex, Is.EqualTo(1));
+        Assert.That(partial.CodesNewestFirst, Is.EqualTo(new ushort[] { 0xBB, 0xAA }).AsCollection);
+
+        // Nothing recorded yet: the sentinel, not a fabricated ordering.
+        var empty = new FrameworkEcPort80HistorySnapshot(0, 4, [0x00, 0x00, 0x00, 0x00]);
+
+        Assert.That(empty.NewestIndex, Is.EqualTo(-1));
+        Assert.That(empty.CodesNewestFirst, Is.Empty);
+    }
+
+    [Test]
+    public void Diagnostics_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.Diagnostics.GetSwitches(),
+            switches => Assert.That(switches.ToString(), Is.Not.Null.And.Not.Empty));
+
+        AssertOptionalReadback(
+            () => ec.Diagnostics.GetSystemInfo(),
+            systemInfo => Assert.That(Enum.IsDefined(systemInfo.CurrentImage)));
+
+        AssertOptionalReadback(
+            () => ec.Diagnostics.GetProtocolInfo(),
+            protocolInfo =>
+            {
+                Assert.That(protocolInfo.MaxRequestPacketSize.Bytes, Is.GreaterThan(0));
+                Assert.That(protocolInfo.MaxResponsePacketSize.Bytes, Is.GreaterThan(0));
+                Assert.That(protocolInfo.SupportedProtocolVersions, Is.Not.Empty);
+            });
+
+        AssertOptionalReadback(
+            () => ec.Diagnostics.GetApThrottleStatus(),
+            throttle => Assert.That(throttle.ToString(), Is.Not.Null.And.Not.Empty));
+
+        AssertOptionalReadback(
+            () => ec.Diagnostics.GetPanicInfo(),
+            panic => Assert.That(panic.Data, Is.Not.Null));
+    }
+
+    [Test]
+    [Description("hello echoes a fixed transform of the input, so a matching response proves the EC is answering rather than returning stale bytes.")]
+    public void Diagnostics_Hello_ShouldEchoTheRequestOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.Diagnostics.CheckHello(),
+            hello => Assert.That(hello.IsExpectedEcho, Is.True, "The EC did not echo the expected hello response."));
+
+        AssertOptionalReadback(
+            () => ec.Diagnostics.SendHello(0xA0B0C0D0),
+            hello => Assert.That(hello.IsExpectedEcho, Is.True, "The EC did not echo the expected hello response."));
+    }
+
+    [Test]
+    public void Diagnostics_Port80History_ShouldBeSelfConsistentOrReportUnavailable()
+    {
+        // The FFI crate reads the history itself rather than calling CrosEc::port80_read, which
+        // rejects the longer-than-requested buffers the Windows driver reports. A DeviceError here
+        // means that workaround regressed, so it is deliberately not tolerated.
+        AssertOptionalReadback(
+            () => ec.Diagnostics.GetPort80History(),
+            AssertPort80HistoryIsSelfConsistent);
+    }
+
+    private static void AssertPort80HistoryIsSelfConsistent(FrameworkEcPort80HistorySnapshot history)
+    {
+        Assert.That(history.Codes, Is.Not.Null);
+        Assert.That(history.CodesNewestFirst.Count, Is.LessThanOrEqualTo(history.Codes.Count));
+
+        if (history.CodesNewestFirst.Count == 0)
+        {
+            Assert.That(history.NewestIndex, Is.EqualTo(-1));
+            return;
+        }
+
+        Assert.That(history.NewestIndex, Is.InRange(0, history.Codes.Count - 1));
+        Assert.That(history.CodesNewestFirst[0], Is.EqualTo(history.Codes[history.NewestIndex]));
+    }
+
+    [Test]
+    public void Diagnostics_CommandVersionProbe_ShouldAnswerForAKnownCommand()
+    {
+        AssertOptionalReadback(
+            () => ec.Diagnostics.IsCommandVersionSupported(0x0000, 0),
+            _ => Assert.Pass());
+    }
+
+    [Test]
+    public void Gpio_Enumeration_ShouldMatchReportedCountOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.Gpio.GetAll(),
+            lines =>
+            {
+                Assert.That(lines, Is.Not.Null);
+                Assert.That(lines.Count, Is.EqualTo(ec.Gpio.GetCount()));
+
+                foreach (var line in lines)
+                {
+                    Assert.That(line.Name, Is.Not.Null.And.Not.Empty, "Every enumerated GPIO must carry a firmware name.");
+                }
+            });
+    }
+
+    [Test]
+    public void Gpio_GetValue_ShouldRejectNullAndEmptyNames()
+    {
+        Assert.That(() => ec.Gpio.GetValue(null!), Throws.TypeOf<ArgumentNullException>());
+        Assert.That(() => ec.Gpio.GetValue(string.Empty), Throws.InstanceOf<ArgumentException>());
+    }
+
+    [Test]
+    [Description("A disabled threshold reads back as -273 C from firmware, so it must surface as null rather than as a temperature.")]
+    public void ThermalThresholds_DisabledThresholds_ShouldBeNullNeverMinus273()
+    {
+        FrameworkThermalSnapshot thermal = ec.GetThermalSnapshot();
+
+        for (byte sensorIndex = 0; sensorIndex < thermal.SensorCount; sensorIndex++)
+        {
+            byte index = sensorIndex;
+
+            AssertOptionalReadback(
+                () => ec.Thermal.GetThresholds(index),
+                thresholds =>
+                {
+                    foreach (var threshold in new[] { thresholds.Warn, thresholds.High, thresholds.Halt, thresholds.FanOff, thresholds.FanMax })
+                    {
+                        if (threshold.HasValue)
+                        {
+                            Assert.That(
+                                threshold.Value.DegreesCelsius,
+                                Is.GreaterThan(-273),
+                                "A threshold that reads back as -273 C is disabled and must be surfaced as null.");
+                        }
+                    }
+                });
+        }
+    }
+
+    [Test]
+    public void ThermalControl_FanCountAndSensorNames_ShouldAgreeWithTheThermalSnapshot()
+    {
+        AssertOptionalReadback(
+            () => ec.Thermal.GetFanCount(),
+            fanCount => Assert.That(fanCount, Is.EqualTo(ec.GetThermalSnapshot().FanCount)));
+
+        AssertOptionalReadback(
+            () => ec.Thermal.GetSensorName(0),
+            name =>
+            {
+                Assert.That(name.FirmwareName, Is.Not.Null);
+                Assert.That(Enum.IsDefined(name.MappedName));
+                Assert.That(Enum.IsDefined(name.SensorType));
+
+                // The second read must come from the cache and agree with the first.
+                Assert.That(ec.Thermal.GetSensorName(0), Is.EqualTo(name));
+            });
+    }
+
+    [Test]
+    public void ThermalControl_SensorNameCache_ShouldThrowAfterTheConnectionIsDisposed()
+    {
+        IFrameworkEcConnection connection = frameworkSystem.OpenDefaultEc();
+        IFrameworkEcThermalControl thermal = connection.Thermal;
+
+        try
+        {
+            _ = thermal.GetSensorName(0);
+        }
+        catch (FrameworkDataUnavailableStatusException)
+        {
+            Assert.Ignore("Sensor names are not available on this device.");
+        }
+
+        connection.Dispose();
+
+        Assert.That(
+            () => thermal.GetSensorName(0),
+            Throws.TypeOf<ObjectDisposedException>(),
+            "A cached sensor name must not be served after the owning connection is disposed.");
+    }
+
+    [Test]
+    public void Battery_ReadOnlySurfaces_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.Battery.GetChargingState(),
+            charging => Assert.That(charging.ToString(), Is.Not.Null.And.Not.Empty));
+
+        AssertOptionalReadback(
+            () => ec.Battery.GetCutoffState(),
+            cutoff => Assert.That(Enum.IsDefined(cutoff)));
+    }
+
+    [Test]
+    [Description("The Smart Battery read costs many I2C round trips, so it is exercised exactly once.")]
+    public void Battery_SmartBatterySnapshot_ShouldReturnConsistentUnitsOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.Battery.GetSmartBatterySnapshot(),
+            battery =>
+            {
+                Assert.That(battery.ManufacturerName, Is.Not.Null);
+                Assert.That(battery.CellVoltages.Count, Is.EqualTo(4));
+
+                // Exactly one of the two parallel capacity sets is populated, chosen by CAPACITY_MODE.
+                if (battery.IsCapacityReportedInEnergyUnits)
+                {
+                    Assert.That(battery.RemainingCapacity, Is.Null);
+                    Assert.That(battery.RemainingEnergy, Is.Not.Null);
+                }
+                else
+                {
+                    Assert.That(battery.RemainingCapacity, Is.Not.Null);
+                    Assert.That(battery.RemainingEnergy, Is.Null);
+                }
+
+                // The sealed groups are null rather than zero-filled.
+                if (!battery.IsUnsealed)
+                {
+                    Assert.That(battery.StateOfHealth, Is.Null);
+                    Assert.That(battery.Safety, Is.Null);
+                    Assert.That(battery.LifetimeData, Is.Null);
+                }
+            });
+    }
+
+    [Test]
+    public void Battery_Authenticate_ShouldRejectKeysThatAreNotSixteenBytes()
+    {
+        Assert.That(() => ec.Battery.Authenticate(null!), Throws.TypeOf<ArgumentNullException>());
+        Assert.That(() => ec.Battery.Authenticate(new byte[15]), Throws.InstanceOf<ArgumentException>());
+        Assert.That(() => ec.Battery.Authenticate(new byte[17]), Throws.InstanceOf<ArgumentException>());
+    }
+
+    [Test]
+    public void PowerDelivery_ControllerVersions_ShouldOnlyReportPresentSlots()
+    {
+        AssertOptionalReadback(
+            () => ec.PowerDelivery.GetControllerVersions(),
+            versions =>
+            {
+                foreach (var controller in versions.PresentControllers)
+                {
+                    Assert.That(controller.IsPresent, Is.True, "PresentControllers must not yield an absent slot.");
+                    Assert.That(Enum.IsDefined(controller.Slot));
+                }
+            });
+    }
+
+    [Test]
+    public void PowerDelivery_GetPowerInfo_ShouldRejectPortsOutsideTheByteRange()
+    {
+        Assert.That(() => ec.PowerDelivery.GetPowerInfo(-1), Throws.TypeOf<ArgumentOutOfRangeException>());
+        Assert.That(() => ec.PowerDelivery.GetPowerInfo(256), Throws.TypeOf<ArgumentOutOfRangeException>());
+    }
+
+    [Test]
+    [Description("The retimer sits behind the Framework 16 expansion bay; other families reject the underlying EC command.")]
+    public void PowerDelivery_RetimerVersion_ShouldReadOnFramework16OrThrowElsewhere()
+    {
+        if (frameworkSystem.GetPlatformFamily() != FrameworkPlatformFamily.Framework16)
+        {
+            Assert.That(() => ec.PowerDelivery.GetRetimerVersion(), Throws.InstanceOf<FrameworkStatusException>());
+            return;
+        }
+
+        AssertOptionalReadback(
+            () => ec.PowerDelivery.GetRetimerVersion(),
+            retimer =>
+            {
+                Assert.That(retimer.Version, Is.Not.Null);
+
+                // The version is four raw register bytes, never text.
+                if (retimer.IsPresent && retimer.Version.Count >= 4)
+                {
+                    Assert.That(retimer.VersionString, Does.Match("^[0-9A-F]+(\\.[0-9A-F]+){3}$"));
+                }
+            });
+    }
+
+    [Test]
+    public void PowerManagement_ReadOnlySurfaces_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        AssertOptionalReadback(
+            () => ec.PowerManagement.GetHibernateDelay(),
+            delay => Assert.That(delay.Seconds, Is.GreaterThanOrEqualTo(0)));
+
+        AssertOptionalReadback(
+            () => ec.PowerManagement.GetStandaloneMode(),
+            standalone => Assert.That(standalone.ToString(), Is.Not.Null.And.Not.Empty));
+    }
+
+    [Test]
+    public void Input_WriteGuards_ShouldRejectImpossibleArgumentsBeforeTouchingHardware()
+    {
+        // 64 keys is the per-call maximum the native ABI accepts.
+        Assert.That(
+            () => ec.Input.SetRgbKeyboardColors(0, new FrameworkKeyboardColor[65]),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+
+        Assert.That(
+            () => ec.Input.SetRgbKeyboardColors(0, []),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+
+        Assert.That(
+            () => ec.Input.SetRgbKeyboardColors(0, null!),
+            Throws.TypeOf<ArgumentNullException>());
+
+        Assert.That(
+            () => ec.Input.SetRgbKeyboardColors(-1, [default]),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+
+        Assert.That(
+            () => ec.Input.SetFingerprintLedBrightness(Ratio.FromPercent(-1)),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+
+        Assert.That(
+            () => ec.Input.SetFingerprintLedBrightness(Ratio.FromPercent(101)),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+
+        Assert.That(
+            () => ec.Input.RemapKey(-1, 0, 0x0014),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+
+        Assert.That(
+            () => ec.Input.RemapKey(0, 256, 0x0014),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+    }
+
+    [Test]
+    public void Peripherals_ReadOnlySurfaces_ShouldReturnExpectedInformationOrReportUnavailable()
+    {
+        IFrameworkPeripherals peripherals = new FrameworkPeripherals();
+
+        AssertOptionalReadback(
+            () => peripherals.GetStylusBattery(),
+            stylus => Assert.That(stylus.ChargeLevel.Percent, Is.InRange(0, 100)));
+
+        AssertOptionalReadback(
+            () => peripherals.GetCameraVersions(),
+            cameras => Assert.That(cameras.Peripherals, Is.Not.Null));
+
+        AssertOptionalReadback(
+            () => peripherals.GetUsbHubVersions(),
+            hubs => Assert.That(hubs.Peripherals, Is.Not.Null));
+    }
+
+    [Test]
+    public void Peripherals_WriteGuards_ShouldRejectImpossibleArgumentsBeforeTouchingHardware()
+    {
+        IFrameworkPeripherals peripherals = new FrameworkPeripherals();
+
+        Assert.That(
+            () => peripherals.SetTouchpadHapticIntensity(Ratio.FromPercent(-1)),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+
+        Assert.That(
+            () => peripherals.SetTouchpadHapticIntensity(Ratio.FromPercent(101)),
+            Throws.TypeOf<ArgumentOutOfRangeException>());
+
+        Assert.That(
+            () => peripherals.GetNvmeVersion(null!),
+            Throws.TypeOf<ArgumentNullException>());
+    }
+
+    [Test]
+    [Platform("Win", Reason = "The NVMe passthrough is gated to Linux upstream, so other platforms must report NotSupported.")]
+    [Description("Verifies the new FrameworkStatusCode.NotSupported maps to a managed exception instead of falling through to ArgumentOutOfRangeException.")]
+    public void Peripherals_NvmeVersion_ShouldReportNotSupportedOnNonLinuxPlatforms()
+    {
+        IFrameworkPeripherals peripherals = new FrameworkPeripherals();
+
+        Assert.That(
+            () => peripherals.GetNvmeVersion("/dev/nvme0"),
+            Throws.TypeOf<FrameworkNotSupportedStatusException>(),
+            "NotSupported must map to FrameworkNotSupportedStatusException, not to an unhandled status code.");
+    }
+
     private static void AssertOptionalReadback<T>(Func<T> readback, Action<T> assertions)
     {
         try
@@ -487,6 +880,9 @@ public sealed class FrameworkHardwareTests
             assertions(readback());
         }
         catch (FrameworkDataUnavailableStatusException)
+        {
+        }
+        catch (FrameworkNotSupportedStatusException)
         {
         }
     }
