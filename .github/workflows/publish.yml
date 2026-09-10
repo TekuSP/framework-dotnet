@@ -48,7 +48,7 @@ jobs:
     # burned the repo's Actions cache/storage quota. cache: false is required explicitly - this
     # action caches BY DEFAULT even without cache-workspaces.
     - name: Setup Rust
-      uses: actions-rust-lang/setup-rust-toolchain@v1
+      uses: actions-rust-lang/setup-rust-toolchain@v2
       with:
         cache: false
 
