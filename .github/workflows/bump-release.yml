@@ -51,7 +51,7 @@ jobs:
         tags: csproj.Version
 
     - name: Create version update pull request
-      uses: peter-evans/create-pull-request@v8.1.1
+      uses: peter-evans/create-pull-request@v8.1.3
       with:
         base: master
         token: ${{ secrets.GH_PR_SEC }}
